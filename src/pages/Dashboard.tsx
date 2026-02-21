@@ -1,0 +1,55 @@
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { LogOut, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+export default function Dashboard() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen bg-background" dir="rtl">
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
+        <div className="container mx-auto flex items-center justify-between h-16 px-4">
+          <h1 className="text-2xl font-bold font-['Space_Grotesk'] bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+            Boardly
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
+            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold font-['Space_Grotesk']">لوحاتي</h2>
+          <Button className="bg-primary hover:bg-primary/90">
+            <Plus className="h-5 w-5 ml-2" /> لوحة جديدة
+          </Button>
+        </div>
+
+        {/* Empty state */}
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+            <Plus className="h-10 w-10 text-primary" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2 font-['Space_Grotesk']">ماعندك لوحات لسه</h3>
+          <p className="text-muted-foreground mb-6">ابدأ بإنشاء أول لوحة إبداعية لك</p>
+          <Button className="bg-primary hover:bg-primary/90">
+            <Plus className="h-5 w-5 ml-2" /> أنشئ لوحتك الأولى
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
+}
