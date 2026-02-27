@@ -24,7 +24,7 @@ export default function Landing() {
       <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/" className="text-2xl font-bold font-['Space_Grotesk'] bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-            Boardly
+            The Salma Padlet
           </Link>
           <div className="flex gap-3">
             <Button variant="ghost" asChild><Link to="/auth/login">تسجيل دخول</Link></Button>
@@ -57,7 +57,7 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
           >
-            أنشئ لوحات تفاعلية، أضف محتوى متنوع، وشارك أفكارك مع العالم. Boardly هو مساحتك الإبداعية.
+            أنشئ لوحات تفاعلية، أضف محتوى متنوع، وشارك أفكارك مع العالم. The Salma Padlet هو مساحتك الإبداعية.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -129,7 +129,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© 2026 Boardly. جميع الحقوق محفوظة.</p>
+          <p>© 2026 The Salma Padlet. جميع الحقوق محفوظة.</p>
         </div>
       </footer>
     </div>

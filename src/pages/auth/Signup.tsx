@@ -39,7 +39,7 @@ export default function Signup() {
       <Card className="w-full max-w-md relative z-10 border-border shadow-lg">
         <CardHeader className="text-center">
           <Link to="/" className="text-3xl font-bold font-['Space_Grotesk'] bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent mb-2 inline-block">
-            Boardly
+            The Salma Padlet
           </Link>
           <CardTitle className="text-2xl font-['Space_Grotesk']">إنشاء حساب جديد</CardTitle>
           <CardDescription>أنشئ حسابك وابدأ في بناء لوحاتك</CardDescription>

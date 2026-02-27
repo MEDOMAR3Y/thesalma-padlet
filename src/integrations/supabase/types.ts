@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      boards: {
+        Row: {
+          background_color: string | null
+          background_image: string | null
+          created_at: string
+          description: string | null
+          folder: string | null
+          id: string
+          is_archived: boolean
+          layout: string
+          title: string
+          updated_at: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          background_color?: string | null
+          background_image?: string | null
+          created_at?: string
+          description?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean
+          layout?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          background_color?: string | null
+          background_image?: string | null
+          created_at?: string
+          description?: string | null
+          folder?: string | null
+          id?: string
+          is_archived?: boolean
+          layout?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
