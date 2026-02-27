@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Board } from '@/hooks/useBoards';
 import { Layout, Grid3X3, Columns3, Network, MoreVertical, Trash2, Archive } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -11,6 +12,7 @@ const layoutLabels = { wall: 'حائط', grid: 'شبكة', column: 'أعمدة',
 
 export default function BoardCard({ board }: { board: Board }) {
   const { deleteBoard, updateBoard } = useBoards();
+  const navigate = useNavigate();
   const Icon = layoutIcons[board.layout];
 
   const handleDelete = async () => {
@@ -31,6 +33,7 @@ export default function BoardCard({ board }: { board: Board }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      onClick={() => navigate(`/board/${board.id}`)}
       className="group relative rounded-2xl border border-border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
     >
       <div className="h-24 relative" style={{ backgroundColor: board.background_color }}>
@@ -48,7 +51,7 @@ export default function BoardCard({ board }: { board: Board }) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
