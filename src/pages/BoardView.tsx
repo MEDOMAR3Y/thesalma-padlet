@@ -82,7 +82,7 @@ export default function BoardView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isOwner && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
+            {(isOwner || userShare?.permission === 'admin') && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
             {(isOwner || hasWriteAccess) && <CreatePostDialog boardId={board.id} />}
           </div>
         </div>
