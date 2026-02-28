@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useBoardShares } from '@/hooks/useBoardShares';
 import { useBoards } from '@/hooks/useBoards';
-import { Share2, Copy, UserPlus, Trash2, Globe, Lock, Check } from 'lucide-react';
+import { Share2, Copy, UserPlus, Trash2, Globe, Lock, Check, ShieldBan } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ShareBoardDialogProps {
@@ -59,6 +59,7 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
     read: 'قراءة فقط',
     write: 'كتابة',
     admin: 'إدارة',
+    blocked: '🚫 محظور',
   };
 
   return (
@@ -159,6 +160,9 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
                           <SelectItem value="read">قراءة</SelectItem>
                           <SelectItem value="write">كتابة</SelectItem>
                           <SelectItem value="admin">إدارة</SelectItem>
+                          <SelectItem value="blocked">
+                            <span className="flex items-center gap-1"><ShieldBan className="h-3 w-3" /> حظر</span>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <Button

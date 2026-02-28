@@ -17,6 +17,7 @@ export interface Post {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  profile?: { display_name: string | null; avatar_url: string | null };
 }
 
 export interface Comment {
@@ -47,7 +48,18 @@ export function usePosts(boardId: string) {
         .eq('board_id', boardId)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return data as Post[];
+      const posts = data as Post[];
+      // Fetch author profiles
+      const userIds = [...new Set(posts.map(p => p.user_id))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url')
+          .in('user_id', userIds);
+        const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.user_id, p]));
+        return posts.map(p => ({ ...p, profile: profileMap[p.user_id] }));
+      }
+      return posts.map(p => ({ ...p, profile: undefined }));
     },
     enabled: !!boardId,
   });

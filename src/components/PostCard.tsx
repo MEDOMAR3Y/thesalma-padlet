@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, MessageCircle, MoreVertical, Trash2, Edit, ExternalLink, FileText, Send, X } from 'lucide-react';
+import { Heart, MessageCircle, MoreVertical, Trash2, Edit, ExternalLink, FileText, Send, X, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -97,6 +97,18 @@ export default function PostCard({ post, boardId }: PostCardProps) {
       )}
 
       <div className="p-4">
+        {/* Author */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            {post.profile?.avatar_url ? (
+              <img src={post.profile.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="" />
+            ) : (
+              <User className="h-3 w-3 text-primary" />
+            )}
+          </div>
+          <span className="text-xs font-medium text-muted-foreground">{post.profile?.display_name || 'مستخدم'}</span>
+        </div>
+
         {/* Content */}
         {post.content && (
           <p className="text-foreground text-sm whitespace-pre-wrap mb-2">{post.content}</p>
