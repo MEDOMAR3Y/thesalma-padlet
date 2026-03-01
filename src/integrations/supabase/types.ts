@@ -252,6 +252,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_board_owner: {
+        Args: { _board_id: string; _user_id: string }
+        Returns: boolean
+      }
       user_has_board_access: {
         Args: { _board_id: string; _user_id: string }
         Returns: boolean
