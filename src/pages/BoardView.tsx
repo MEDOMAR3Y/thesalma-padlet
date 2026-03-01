@@ -12,6 +12,7 @@ import PostCard from '@/components/PostCard';
 import ShareBoardDialog from '@/components/ShareBoardDialog';
 import { ArrowRight, Layout, Grid3X3, Columns3, Network, Settings, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const layoutIcons = { wall: Layout, grid: Grid3X3, column: Columns3, map: Network };
 
@@ -82,6 +83,7 @@ export default function BoardView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {(isOwner || userShare?.permission === 'admin') && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
             {(isOwner || hasWriteAccess) && <CreatePostDialog boardId={board.id} />}
           </div>
