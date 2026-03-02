@@ -4,9 +4,27 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, MessageCircle, MoreVertical, Trash2, Edit, ExternalLink, FileText, Send, X, User } from 'lucide-react';
+import { Heart, MessageCircle, MoreVertical, Trash2, ExternalLink, FileText, Send, X, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getVideoEmbed } from '@/lib/videoEmbed';
+
+function renderFormattedText(text: string) {
+  // Simple markdown: **bold**, *italic*, __underline__, - list items
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    let formatted = line
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/__(.+?)__/g, '<u>$1</u>');
+    
+    if (line.startsWith('- ')) {
+      formatted = `• ${formatted.substring(2)}`;
+    }
+    
+    return <span key={i} dangerouslySetInnerHTML={{ __html: formatted }} className="block" />;
+  });
+}
 
 function PostLikes({ postId }: { postId: string }) {
   const { isLiked, count, toggleLike } = useLikes(postId);
@@ -67,6 +85,23 @@ function PostComments({ postId }: { postId: string }) {
   );
 }
 
+function VideoEmbed({ url }: { url: string }) {
+  const embed = getVideoEmbed(url);
+  if (!embed) return null;
+  
+  return (
+    <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-muted">
+      <iframe
+        src={embed.embedUrl}
+        className="absolute inset-0 w-full h-full"
+        allowFullScreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        loading="lazy"
+      />
+    </div>
+  );
+}
+
 interface PostCardProps {
   post: Post;
   boardId: string;
@@ -74,6 +109,9 @@ interface PostCardProps {
 
 export default function PostCard({ post, boardId }: PostCardProps) {
   const { deletePost } = usePosts(boardId);
+  const { user } = useAuth();
+  const isOwner = post.user_id === user?.id;
+  const videoEmbed = post.link_url ? getVideoEmbed(post.link_url) : null;
 
   const handleDelete = async () => {
     try {
@@ -96,6 +134,11 @@ export default function PostCard({ post, boardId }: PostCardProps) {
         <img src={post.file_url} alt={post.content || ''} className="w-full max-h-64 object-cover" />
       )}
 
+      {/* Video Embed */}
+      {post.link_url && videoEmbed && (
+        <VideoEmbed url={post.link_url} />
+      )}
+
       <div className="p-4">
         {/* Author */}
         <div className="flex items-center gap-2 mb-2">
@@ -109,13 +152,15 @@ export default function PostCard({ post, boardId }: PostCardProps) {
           <span className="text-xs font-medium text-muted-foreground">{post.profile?.display_name || 'مستخدم'}</span>
         </div>
 
-        {/* Content */}
+        {/* Content with formatting */}
         {post.content && (
-          <p className="text-foreground text-sm whitespace-pre-wrap mb-2">{post.content}</p>
+          <div className="text-foreground text-sm mb-2">
+            {renderFormattedText(post.content)}
+          </div>
         )}
 
-        {/* Link */}
-        {post.post_type === 'link' && post.link_url && (
+        {/* Link (non-video) */}
+        {post.post_type === 'link' && post.link_url && !videoEmbed && (
           <a href={post.link_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary text-sm hover:underline mb-2 break-all">
             <ExternalLink className="h-4 w-4 shrink-0" /> {post.link_url}
           </a>
@@ -134,18 +179,20 @@ export default function PostCard({ post, boardId }: PostCardProps) {
             <PostLikes postId={post.id} />
             <PostComments postId={post.id} />
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                <Trash2 className="h-4 w-4 ml-2" /> حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {isOwner && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                  <Trash2 className="h-4 w-4 ml-2" /> حذف
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </motion.div>
