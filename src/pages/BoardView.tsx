@@ -1,5 +1,6 @@
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
@@ -10,9 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CreatePostDialog from '@/components/CreatePostDialog';
 import PostCard from '@/components/PostCard';
 import ShareBoardDialog from '@/components/ShareBoardDialog';
-import { ArrowRight, Layout, Grid3X3, Columns3, Network, Settings, Plus } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { ArrowRight, Layout, Grid3X3, Columns3, Network, Plus, Settings, Share2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
+import logo from '@/assets/logo.png';
 
 const layoutIcons = { wall: Layout, grid: Grid3X3, column: Columns3, map: Network };
 
@@ -22,9 +24,47 @@ export default function BoardView() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { shares } = useBoardShares(id!);
+  const token = searchParams.get('token');
+
+  // Token-based access: associate token with user
+  useEffect(() => {
+    if (!token || !user || !id) return;
+    (async () => {
+      // Find the share by token
+      const { data: share } = await supabase
+        .from('board_shares')
+        .select('*')
+        .eq('board_id', id)
+        .eq('share_token', token)
+        .maybeSingle();
+      
+      if (share && !share.user_id) {
+        // Associate this share with the current user
+        await supabase.from('board_shares')
+          .update({ user_id: user.id, email: user.email })
+          .eq('id', share.id);
+      } else if (share && share.user_id !== user.id) {
+        // Create a new share for this user with same permission
+        const { data: existing } = await supabase
+          .from('board_shares')
+          .select('id')
+          .eq('board_id', id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (!existing) {
+          await supabase.from('board_shares').insert({
+            board_id: id,
+            user_id: user.id,
+            email: user.email,
+            permission: share.permission,
+          });
+        }
+      }
+    })();
+  }, [token, user, id]);
 
   const userShare = shares.find(s => s.user_id === user?.id);
-  const hasWriteAccess = userShare?.permission === 'write' || userShare?.permission === 'admin';
 
   const boardQuery = useQuery({
     queryKey: ['board', id],
@@ -58,6 +98,8 @@ export default function BoardView() {
 
   const Icon = layoutIcons[board.layout];
   const isOwner = user?.id === board.user_id;
+  const hasWriteAccess = isOwner || userShare?.permission === 'write' || userShare?.permission === 'admin';
+  const hasAdminAccess = isOwner || userShare?.permission === 'admin';
 
   const getLayoutClasses = () => {
     switch (board.layout) {
@@ -70,12 +112,25 @@ export default function BoardView() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-border" style={{ backgroundColor: `${board.background_color}20` }}>
+      {/* Minimal Header - Logo + Theme Only */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-14 px-4">
+          <Link to="/dashboard"><img src={logo} alt="Logo" className="h-9 object-contain" /></Link>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Board Action Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="border-b border-border/50"
+        style={{ backgroundColor: `${board.background_color}10` }}
+      >
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-              <ArrowRight className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')} className="h-8 w-8">
+              <ArrowRight className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
               <Icon className="h-5 w-5 text-muted-foreground" />
@@ -83,12 +138,11 @@ export default function BoardView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {(isOwner || userShare?.permission === 'admin') && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
-            {(isOwner || hasWriteAccess) && <CreatePostDialog boardId={board.id} />}
+            {hasAdminAccess && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
+            {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
           </div>
         </div>
-      </header>
+      </motion.div>
 
       {/* Board Content */}
       <main className="container mx-auto px-4 py-8">
@@ -109,7 +163,7 @@ export default function BoardView() {
             </div>
             <h3 className="text-lg font-semibold mb-2 font-['Space_Grotesk']">اللوحة فاضية</h3>
             <p className="text-muted-foreground mb-4">أضف أول بوست على هذي اللوحة</p>
-            {isOwner && <CreatePostDialog boardId={board.id} />}
+            {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
           </div>
         ) : (
           <div className={getLayoutClasses()}>

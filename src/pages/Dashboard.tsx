@@ -1,8 +1,8 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useBoards } from '@/hooks/useBoards';
 import { Button } from '@/components/ui/button';
-import { LogOut, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut, Plus, UserCircle } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 import CreateBoardDialog from '@/components/CreateBoardDialog';
 import BoardCard from '@/components/BoardCard';
@@ -22,13 +22,16 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      {/* Minimal Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-        <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <img src={logo} alt="The Salma Padlet" className="h-10 object-contain" />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground hidden sm:block">{user?.email}</span>
+        <div className="container mx-auto flex items-center justify-between h-14 px-4">
+          <Link to="/dashboard"><img src={logo} alt="Logo" className="h-9 object-contain" /></Link>
+          <div className="flex items-center gap-1">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} title="البروفايل">
+              <UserCircle className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} title="تسجيل خروج">
               <LogOut className="h-5 w-5" />
             </Button>
           </div>

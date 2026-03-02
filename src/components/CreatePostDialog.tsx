@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Loader2, Type, Image, Link2, FileUp } from 'lucide-react';
+import { Plus, Loader2, Image, Link2, FileUp, Bold, Italic, Underline, List, X, Video } from 'lucide-react';
 import { usePosts, uploadPostFile } from '@/hooks/usePosts';
 import { useAuth } from '@/hooks/useAuth';
+import { isVideoUrl } from '@/lib/videoEmbed';
 import { toast } from 'sonner';
 
 const POST_COLORS = ['#ffffff', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#f3e8ff', '#fed7d7', '#e0e7ff'];
@@ -19,24 +19,38 @@ interface CreatePostDialogProps {
 
 export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogProps) {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState('text');
   const [content, setContent] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [color, setColor] = useState(POST_COLORS[0]);
   const [file, setFile] = useState<File | null>(null);
+  const [fileType, setFileType] = useState<'image' | 'file' | null>(null);
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const [loading, setLoading] = useState(false);
   const { createPost } = usePosts(boardId);
   const { user } = useAuth();
+  const textRef = useRef<HTMLTextAreaElement>(null);
 
   const reset = () => {
-    setContent(''); setLinkUrl(''); setColor(POST_COLORS[0]); setFile(null); setTab('text');
+    setContent(''); setLinkUrl(''); setColor(POST_COLORS[0]); setFile(null); setFileType(null); setShowLinkInput(false);
+  };
+
+  const insertFormat = (prefix: string, suffix: string) => {
+    const ta = textRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = content.substring(start, end);
+    const newContent = content.substring(0, start) + prefix + selected + suffix + content.substring(end);
+    setContent(newContent);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (tab === 'text' && !content.trim()) { toast.error('اكتب محتوى البوست'); return; }
-    if (tab === 'link' && !linkUrl.trim()) { toast.error('أدخل الرابط'); return; }
-    if ((tab === 'image' || tab === 'file') && !file) { toast.error('اختار ملف'); return; }
+    if (!content.trim() && !file && !linkUrl.trim()) { toast.error('أضف محتوى للبوست'); return; }
 
     setLoading(true);
     try {
@@ -46,12 +60,15 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
         fileUrl = await uploadPostFile(file, user.id);
         fileName = file.name;
       }
+
+      const postType = file ? (fileType === 'image' ? 'image' : 'file') : linkUrl.trim() ? 'link' : 'text';
+
       await createPost.mutateAsync({
         board_id: boardId,
         content: content.trim() || null,
-        post_type: tab as any,
+        post_type: postType as any,
         color,
-        link_url: tab === 'link' ? linkUrl.trim() : null,
+        link_url: linkUrl.trim() || null,
         file_url: fileUrl ?? null,
         file_name: fileName ?? null,
       });
@@ -69,8 +86,8 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="h-5 w-5 ml-2" /> إضافة بوست
+          <Button className="bg-primary hover:bg-primary/90 gap-2">
+            <Plus className="h-5 w-5" /> إضافة بوست
           </Button>
         )}
       </DialogTrigger>
@@ -79,45 +96,87 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
           <DialogTitle className="font-['Space_Grotesk'] text-xl">إضافة بوست جديد</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid grid-cols-4 w-full">
-              <TabsTrigger value="text" className="flex gap-1"><Type className="h-4 w-4" /> نص</TabsTrigger>
-              <TabsTrigger value="image" className="flex gap-1"><Image className="h-4 w-4" /> صورة</TabsTrigger>
-              <TabsTrigger value="link" className="flex gap-1"><Link2 className="h-4 w-4" /> رابط</TabsTrigger>
-              <TabsTrigger value="file" className="flex gap-1"><FileUp className="h-4 w-4" /> ملف</TabsTrigger>
-            </TabsList>
+          {/* Formatting Toolbar */}
+          <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => insertFormat('**', '**')} title="عريض">
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => insertFormat('*', '*')} title="مائل">
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => insertFormat('__', '__')} title="تحته خط">
+              <Underline className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => insertFormat('\n- ', '')} title="قائمة">
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
 
-            <TabsContent value="text" className="space-y-3 mt-3">
-              <Textarea placeholder="اكتب محتوى البوست..." value={content} onChange={e => setContent(e.target.value)} rows={4} />
-            </TabsContent>
+          {/* Text Area */}
+          <Textarea
+            ref={textRef}
+            placeholder="اكتب محتوى البوست..."
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            rows={4}
+            className="resize-none"
+          />
 
-            <TabsContent value="image" className="space-y-3 mt-3">
-              <div className="space-y-2">
-                <Label>اختار صورة</Label>
-                <Input type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] ?? null)} />
-                {file && <p className="text-sm text-muted-foreground">{file.name}</p>}
+          {/* Attachments */}
+          <div className="space-y-3">
+            {/* Media Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="text-sm text-muted-foreground">أضف:</Label>
+              <label className="cursor-pointer">
+                <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
+                  <span><Image className="h-4 w-4" /> صورة</span>
+                </Button>
+                <input type="file" accept="image/*" className="hidden" onChange={e => { setFile(e.target.files?.[0] ?? null); setFileType('image'); }} />
+              </label>
+              <label className="cursor-pointer">
+                <Button type="button" variant="outline" size="sm" className="gap-1" asChild>
+                  <span><FileUp className="h-4 w-4" /> ملف</span>
+                </Button>
+                <input type="file" className="hidden" onChange={e => { setFile(e.target.files?.[0] ?? null); setFileType('file'); }} />
+              </label>
+              <Button type="button" variant="outline" size="sm" className="gap-1" onClick={() => setShowLinkInput(!showLinkInput)}>
+                <Video className="h-4 w-4" /> رابط / فيديو
+              </Button>
+            </div>
+
+            {/* File Preview */}
+            {file && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                {fileType === 'image' ? <Image className="h-4 w-4 text-primary" /> : <FileUp className="h-4 w-4 text-primary" />}
+                <span className="flex-1 truncate">{file.name}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setFile(null); setFileType(null); }}>
+                  <X className="h-3 w-3" />
+                </Button>
               </div>
-              <Textarea placeholder="وصف الصورة (اختياري)..." value={content} onChange={e => setContent(e.target.value)} rows={2} />
-            </TabsContent>
+            )}
 
-            <TabsContent value="link" className="space-y-3 mt-3">
-              <div className="space-y-2">
-                <Label>الرابط</Label>
-                <Input type="url" placeholder="https://example.com" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} dir="ltr" />
+            {/* Link Input */}
+            {showLinkInput && (
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  placeholder="https://youtube.com/watch?v=... أو أي رابط"
+                  value={linkUrl}
+                  onChange={e => setLinkUrl(e.target.value)}
+                  dir="ltr"
+                  className="flex-1"
+                />
+                <Button type="button" variant="ghost" size="icon" onClick={() => { setShowLinkInput(false); setLinkUrl(''); }}>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Textarea placeholder="وصف الرابط (اختياري)..." value={content} onChange={e => setContent(e.target.value)} rows={2} />
-            </TabsContent>
+            )}
+            {linkUrl && isVideoUrl(linkUrl) && (
+              <p className="text-xs text-primary">✓ سيتم تضمين الفيديو تلقائياً</p>
+            )}
+          </div>
 
-            <TabsContent value="file" className="space-y-3 mt-3">
-              <div className="space-y-2">
-                <Label>اختار ملف</Label>
-                <Input type="file" onChange={e => setFile(e.target.files?.[0] ?? null)} />
-                {file && <p className="text-sm text-muted-foreground">{file.name}</p>}
-              </div>
-              <Textarea placeholder="وصف الملف (اختياري)..." value={content} onChange={e => setContent(e.target.value)} rows={2} />
-            </TabsContent>
-          </Tabs>
-
+          {/* Color */}
           <div className="space-y-2">
             <Label>لون البوست</Label>
             <div className="flex gap-2 flex-wrap">
