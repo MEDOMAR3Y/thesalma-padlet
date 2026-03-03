@@ -1,20 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
 
 export interface BoardShare {
   id: string;
   board_id: string;
   user_id: string | null;
   email: string | null;
-  permission: 'read' | 'write' | 'admin';
+  permission: 'read' | 'write' | 'admin' | 'blocked';
   share_token: string;
   created_at: string;
   profile?: { display_name: string | null; avatar_url: string | null };
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function useBoardShares(boardId: string) {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const sharesQuery = useQuery({
@@ -23,52 +23,84 @@ export function useBoardShares(boardId: string) {
       const { data, error } = await supabase
         .from('board_shares')
         .select('*')
-        .eq('board_id', boardId);
+        .eq('board_id', boardId)
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      
-      // Fetch profiles for user-based shares
-      const userIds = (data as BoardShare[]).filter(s => s.user_id).map(s => s.user_id!);
+
+      const rows = (data ?? []) as BoardShare[];
+      const userIds = [...new Set(rows.filter(s => s.user_id).map(s => s.user_id!))];
+
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('user_id, display_name, avatar_url')
           .in('user_id', userIds);
         const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.user_id, p]));
-        return (data as BoardShare[]).map(s => ({ ...s, profile: s.user_id ? profileMap[s.user_id] : undefined }));
+        return rows.map(s => ({ ...s, profile: s.user_id ? profileMap[s.user_id] : undefined }));
       }
-      return data as BoardShare[];
+
+      return rows;
     },
     enabled: !!boardId,
   });
 
   const addShare = useMutation({
-    mutationFn: async ({ email, permission }: { email: string; permission: string }) => {
-      // Check if user exists by email in profiles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('display_name', email) // We'll search by email later
-        .maybeSingle();
-      
-      const { error } = await supabase
+    mutationFn: async ({ identifier, permission }: { identifier: string; permission: BoardShare['permission'] }) => {
+      const value = identifier.trim();
+      if (!value) throw new Error('empty_identifier');
+
+      const isEmail = EMAIL_REGEX.test(value);
+      let targetUserId: string | null = null;
+      let targetEmail: string | null = null;
+
+      if (isEmail) {
+        targetEmail = value.toLowerCase();
+      } else {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .ilike('display_name', value)
+          .limit(1)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+        if (!profile?.user_id) throw new Error('user_not_found');
+        targetUserId = profile.user_id;
+      }
+
+      let existingQuery = supabase
         .from('board_shares')
-        .insert({
-          board_id: boardId,
-          email,
-          permission,
-          user_id: profile?.user_id || null,
-        });
+        .select('id')
+        .eq('board_id', boardId)
+        .limit(1);
+
+      existingQuery = targetUserId
+        ? existingQuery.eq('user_id', targetUserId)
+        : existingQuery.eq('email', targetEmail!);
+
+      const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+      if (existingError) throw existingError;
+
+      if (existing?.id) {
+        const { error } = await supabase.from('board_shares').update({ permission }).eq('id', existing.id);
+        if (error) throw error;
+        return;
+      }
+
+      const { error } = await supabase.from('board_shares').insert({
+        board_id: boardId,
+        permission,
+        user_id: targetUserId,
+        email: targetEmail,
+      });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] }),
   });
 
   const updatePermission = useMutation({
-    mutationFn: async ({ id, permission }: { id: string; permission: string }) => {
-      const { error } = await supabase
-        .from('board_shares')
-        .update({ permission })
-        .eq('id', id);
+    mutationFn: async ({ id, permission }: { id: string; permission: BoardShare['permission'] }) => {
+      const { error } = await supabase.from('board_shares').update({ permission }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] }),
@@ -82,21 +114,7 @@ export function useBoardShares(boardId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] }),
   });
 
-  // Get share link token
-  const getShareLink = async () => {
-    // Find or create a link-only share (no user_id)
-    const existing = sharesQuery.data?.find(s => !s.user_id && !s.email);
-    if (existing) return existing.share_token;
-    
-    const { data, error } = await supabase
-      .from('board_shares')
-      .insert({ board_id: boardId, permission: 'read' })
-      .select('share_token')
-      .single();
-    if (error) throw error;
-    queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] });
-    return data.share_token;
-  };
+  const getShareLink = async () => boardId;
 
   return {
     shares: sharesQuery.data ?? [],
@@ -107,3 +125,4 @@ export function useBoardShares(boardId: string) {
     getShareLink,
   };
 }
+

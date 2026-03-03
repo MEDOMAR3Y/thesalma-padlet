@@ -113,6 +113,10 @@ export default function PostCard({ post, boardId }: PostCardProps) {
   const isOwner = post.user_id === user?.id;
   const videoEmbed = post.link_url ? getVideoEmbed(post.link_url) : null;
 
+  const resolvedBackground = post.color?.toLowerCase() === '#ffffff'
+    ? 'hsl(var(--card))'
+    : (post.color || 'hsl(var(--card))');
+
   const handleDelete = async () => {
     try {
       await deletePost.mutateAsync(post.id);
@@ -127,7 +131,7 @@ export default function PostCard({ post, boardId }: PostCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       className="rounded-xl border border-border shadow-sm overflow-hidden group"
-      style={{ backgroundColor: post.color }}
+      style={{ backgroundColor: resolvedBackground }}
     >
       {/* Image */}
       {post.post_type === 'image' && post.file_url && (

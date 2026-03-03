@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Loader2, Image, Link2, FileUp, Bold, Italic, Underline, List, X, Video } from 'lucide-react';
+import { Plus, Loader2, Image, FileUp, Bold, Italic, Underline, List, X, Video } from 'lucide-react';
 import { usePosts, uploadPostFile } from '@/hooks/usePosts';
 import { useAuth } from '@/hooks/useAuth';
 import { isVideoUrl } from '@/lib/videoEmbed';
@@ -31,7 +31,12 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const reset = () => {
-    setContent(''); setLinkUrl(''); setColor(POST_COLORS[0]); setFile(null); setFileType(null); setShowLinkInput(false);
+    setContent('');
+    setLinkUrl('');
+    setColor(POST_COLORS[0]);
+    setFile(null);
+    setFileType(null);
+    setShowLinkInput(false);
   };
 
   const insertFormat = (prefix: string, suffix: string) => {
@@ -50,33 +55,48 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() && !file && !linkUrl.trim()) { toast.error('أضف محتوى للبوست'); return; }
+
+    const trimmedLink = linkUrl.trim();
+    const normalizedLink = trimmedLink
+      ? (/^https?:\/\//i.test(trimmedLink) ? trimmedLink : `https://${trimmedLink}`)
+      : '';
+
+    if (!content.trim() && !file && !normalizedLink) {
+      toast.error('أضف محتوى للمنشور');
+      return;
+    }
 
     setLoading(true);
     try {
       let fileUrl: string | undefined;
       let fileName: string | undefined;
+
       if (file && user) {
         fileUrl = await uploadPostFile(file, user.id);
         fileName = file.name;
       }
 
-      const postType = file ? (fileType === 'image' ? 'image' : 'file') : linkUrl.trim() ? 'link' : 'text';
+      const postType = file
+        ? (fileType === 'image' ? 'image' : 'file')
+        : normalizedLink
+          ? 'link'
+          : 'text';
 
       await createPost.mutateAsync({
         board_id: boardId,
         content: content.trim() || null,
         post_type: postType as any,
         color,
-        link_url: linkUrl.trim() || null,
+        link_url: normalizedLink || null,
         file_url: fileUrl ?? null,
         file_name: fileName ?? null,
       });
-      toast.success('تم إضافة البوست!');
+
+      toast.success('تم إضافة المنشور!');
       setOpen(false);
       reset();
-    } catch {
-      toast.error('حصل خطأ');
+    } catch (err: any) {
+      toast.error(err?.message || 'حصل خطأ أثناء النشر');
     } finally {
       setLoading(false);
     }
@@ -87,16 +107,15 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
       <DialogTrigger asChild>
         {trigger || (
           <Button className="bg-primary hover:bg-primary/90 gap-2">
-            <Plus className="h-5 w-5" /> إضافة بوست
+            <Plus className="h-5 w-5" /> إضافة منشور
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="font-['Space_Grotesk'] text-xl">إضافة بوست جديد</DialogTitle>
+          <DialogTitle className="font-['Space_Grotesk'] text-xl">إضافة منشور جديد</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          {/* Formatting Toolbar */}
           <div className="flex items-center gap-1 border border-border rounded-lg p-1 bg-muted/30">
             <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => insertFormat('**', '**')} title="عريض">
               <Bold className="h-4 w-4" />
@@ -112,19 +131,16 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
             </Button>
           </div>
 
-          {/* Text Area */}
           <Textarea
             ref={textRef}
-            placeholder="اكتب محتوى البوست..."
+            placeholder="اكتب محتوى المنشور..."
             value={content}
             onChange={e => setContent(e.target.value)}
             rows={4}
             className="resize-none"
           />
 
-          {/* Attachments */}
           <div className="space-y-3">
-            {/* Media Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               <Label className="text-sm text-muted-foreground">أضف:</Label>
               <label className="cursor-pointer">
@@ -144,7 +160,6 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
               </Button>
             </div>
 
-            {/* File Preview */}
             {file && (
               <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
                 {fileType === 'image' ? <Image className="h-4 w-4 text-primary" /> : <FileUp className="h-4 w-4 text-primary" />}
@@ -155,12 +170,11 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
               </div>
             )}
 
-            {/* Link Input */}
             {showLinkInput && (
               <div className="flex gap-2">
                 <Input
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=... أو أي رابط"
+                  type="text"
+                  placeholder="youtube.com/watch?v=... أو tiktok.com/..."
                   value={linkUrl}
                   onChange={e => setLinkUrl(e.target.value)}
                   dir="ltr"
@@ -171,14 +185,14 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
                 </Button>
               </div>
             )}
-            {linkUrl && isVideoUrl(linkUrl) && (
+
+            {linkUrl && isVideoUrl(/^https?:\/\//i.test(linkUrl) ? linkUrl : `https://${linkUrl}`) && (
               <p className="text-xs text-primary">✓ سيتم تضمين الفيديو تلقائياً</p>
             )}
           </div>
 
-          {/* Color */}
           <div className="space-y-2">
-            <Label>لون البوست</Label>
+            <Label>لون المنشور</Label>
             <div className="flex gap-2 flex-wrap">
               {POST_COLORS.map(c => (
                 <button
@@ -193,10 +207,11 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
           </div>
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'أضف البوست'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'نشر'}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
+
