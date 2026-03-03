@@ -9,7 +9,6 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
-import Dashboard from "./pages/Dashboard";
 import BoardView from "./pages/BoardView";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -26,7 +25,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/profile" replace />;
   return <>{children}</>;
 }
 
@@ -38,14 +37,14 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
+            <Route path="/" element={<Landing />} />
             <Route path="/auth/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/auth/signup" element={<PublicRoute><Signup /></PublicRoute>} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/board/:id" element={<ProtectedRoute><BoardView /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
@@ -55,3 +54,4 @@ const App = () => (
 );
 
 export default App;
+

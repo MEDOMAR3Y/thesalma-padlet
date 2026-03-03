@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useBoardShares } from '@/hooks/useBoardShares';
+import { useBoardShares, type BoardShare } from '@/hooks/useBoardShares';
 import { useBoards } from '@/hooks/useBoards';
 import { Share2, Copy, UserPlus, Trash2, Globe, Lock, Check, ShieldBan } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,19 +16,18 @@ interface ShareBoardDialogProps {
 
 export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBoardDialogProps) {
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState('');
-  const [permission, setPermission] = useState('read');
+  const [identifier, setIdentifier] = useState('');
+  const [permission, setPermission] = useState<BoardShare['permission']>('read');
   const [copied, setCopied] = useState(false);
-  const { shares, addShare, removeShare, updatePermission, getShareLink } = useBoardShares(boardId);
+  const { shares, addShare, removeShare, updatePermission } = useBoardShares(boardId);
   const { updateBoard } = useBoards();
 
   const handleCopyLink = async () => {
     try {
-      const token = await getShareLink();
-      const url = `${window.location.origin}/board/${boardId}?token=${token}`;
+      const url = `${window.location.origin}/board/${boardId}`;
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      toast.success('تم نسخ الرابط!');
+      toast.success('تم نسخ رابط المشاركة!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('فشل نسخ الرابط');
@@ -36,13 +35,18 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
   };
 
   const handleInvite = async () => {
-    if (!email.trim()) return;
+    if (!identifier.trim()) return;
+
     try {
-      await addShare.mutateAsync({ email: email.trim(), permission });
-      setEmail('');
-      toast.success('تم إرسال الدعوة!');
-    } catch {
-      toast.error('فشل إرسال الدعوة');
+      await addShare.mutateAsync({ identifier: identifier.trim(), permission });
+      setIdentifier('');
+      toast.success(permission === 'blocked' ? 'تم الحظر بنجاح' : 'تم إرسال الدعوة!');
+    } catch (err: any) {
+      if (err?.message === 'user_not_found') {
+        toast.error('اسم المستخدم غير موجود');
+        return;
+      }
+      toast.error('فشل تنفيذ العملية');
     }
   };
 
@@ -76,7 +80,6 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Visibility */}
           <div className="space-y-2">
             <label className="text-sm font-medium">الخصوصية</label>
             <Select value={currentVisibility} onValueChange={handleVisibilityChange}>
@@ -94,9 +97,8 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
             </Select>
           </div>
 
-          {/* Copy Link */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">رابط المشاركة</label>
+            <label className="text-sm font-medium">رابط المشاركة المختصر</label>
             <div className="flex gap-2">
               <Button onClick={handleCopyLink} variant="outline" className="flex-1 gap-2">
                 {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
@@ -105,25 +107,25 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
             </div>
           </div>
 
-          {/* Invite by Email */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">دعوة مستخدم</label>
+            <label className="text-sm font-medium">دعوة أو حظر مستخدم (إيميل أو يوزرنيم)</label>
             <div className="flex gap-2">
               <Input
-                placeholder="البريد الإلكتروني"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                placeholder="username أو email@example.com"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 className="flex-1"
-                type="email"
+                dir="ltr"
               />
-              <Select value={permission} onValueChange={setPermission}>
-                <SelectTrigger className="w-28">
+              <Select value={permission} onValueChange={v => setPermission(v as BoardShare['permission'])}>
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="read">قراءة</SelectItem>
                   <SelectItem value="write">كتابة</SelectItem>
                   <SelectItem value="admin">إدارة</SelectItem>
+                  <SelectItem value="blocked">حظر</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={handleInvite} size="icon" disabled={addShare.isPending}>
@@ -132,7 +134,6 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
             </div>
           </div>
 
-          {/* Current Shares */}
           {shares.filter(s => s.email || s.user_id).length > 0 && (
             <div className="space-y-2">
               <label className="text-sm font-medium">المشاركون</label>
@@ -149,10 +150,7 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Select
-                        value={share.permission}
-                        onValueChange={p => updatePermission.mutate({ id: share.id, permission: p })}
-                      >
+                      <Select value={share.permission} onValueChange={p => updatePermission.mutate({ id: share.id, permission: p as BoardShare['permission'] })}>
                         <SelectTrigger className="w-20 h-7 text-xs">
                           <SelectValue />
                         </SelectTrigger>
@@ -165,12 +163,7 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
                           </SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => removeShare.mutate(share.id)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeShare.mutate(share.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
@@ -184,3 +177,4 @@ export default function ShareBoardDialog({ boardId, currentVisibility }: ShareBo
     </Dialog>
   );
 }
+

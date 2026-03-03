@@ -40,7 +40,7 @@ export default function ResetPassword() {
       toast.error(error.message);
     } else {
       toast.success('تم تغيير كلمة السر بنجاح!');
-      navigate('/dashboard');
+      navigate('/profile');
     }
   };
 

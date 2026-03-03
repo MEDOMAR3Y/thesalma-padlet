@@ -24,7 +24,7 @@ export default function Login() {
     if (error) {
       toast.error(error.message === 'Invalid login credentials' ? 'البريد أو كلمة السر غلط' : error.message);
     } else {
-      navigate('/dashboard');
+      navigate('/profile');
     }
   };
 

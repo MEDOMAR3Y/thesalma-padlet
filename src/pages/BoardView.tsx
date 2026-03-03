@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePosts } from '@/hooks/usePosts';
@@ -11,7 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CreatePostDialog from '@/components/CreatePostDialog';
 import PostCard from '@/components/PostCard';
 import ShareBoardDialog from '@/components/ShareBoardDialog';
-import { ArrowRight, Layout, Grid3X3, Columns3, Network, Plus, Settings, Share2 } from 'lucide-react';
+import BoardSettingsDialog from '@/components/BoardSettingsDialog';
+import { ArrowRight, Layout, Grid3X3, Columns3, Network, Plus, UserCircle, LogOut } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import logo from '@/assets/logo.png';
@@ -22,41 +23,47 @@ export default function BoardView() {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { shares } = useBoardShares(id!);
   const token = searchParams.get('token');
 
-  // Token-based access: associate token with user
   useEffect(() => {
-    if (!token || !user || !id) return;
+    if (!user || !id) return;
+
     (async () => {
-      // Find the share by token
+      if (user.email) {
+        await supabase
+          .from('board_shares')
+          .update({ user_id: user.id, email: user.email.toLowerCase() })
+          .eq('board_id', id)
+          .is('user_id', null)
+          .ilike('email', user.email);
+      }
+
+      if (!token) return;
+
       const { data: share } = await supabase
         .from('board_shares')
         .select('*')
         .eq('board_id', id)
         .eq('share_token', token)
         .maybeSingle();
-      
+
       if (share && !share.user_id) {
-        // Associate this share with the current user
-        await supabase.from('board_shares')
-          .update({ user_id: user.id, email: user.email })
-          .eq('id', share.id);
+        await supabase.from('board_shares').update({ user_id: user.id, email: user.email?.toLowerCase() || null }).eq('id', share.id);
       } else if (share && share.user_id !== user.id) {
-        // Create a new share for this user with same permission
         const { data: existing } = await supabase
           .from('board_shares')
           .select('id')
           .eq('board_id', id)
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         if (!existing) {
           await supabase.from('board_shares').insert({
             board_id: id,
             user_id: user.id,
-            email: user.email,
+            email: user.email?.toLowerCase() || null,
             permission: share.permission,
           });
         }
@@ -64,7 +71,7 @@ export default function BoardView() {
     })();
   }, [token, user, id]);
 
-  const userShare = shares.find(s => s.user_id === user?.id);
+  const userShare = shares.find(s => s.user_id === user?.id || (user?.email && s.email?.toLowerCase() === user.email.toLowerCase()));
 
   const boardQuery = useQuery({
     queryKey: ['board', id],
@@ -79,6 +86,11 @@ export default function BoardView() {
   const { posts, isLoading: postsLoading } = usePosts(id!);
   const board = boardQuery.data;
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   if (boardQuery.isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -91,7 +103,7 @@ export default function BoardView() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4" dir="rtl">
         <p className="text-xl text-muted-foreground">اللوحة غير موجودة</p>
-        <Button asChild><Link to="/dashboard">رجوع للداشبورد</Link></Button>
+        <Button asChild><Link to="/profile">رجوع للبروفايل</Link></Button>
       </div>
     );
   }
@@ -112,49 +124,63 @@ export default function BoardView() {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Minimal Header - Logo + Theme Only */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border">
-        <div className="container mx-auto flex items-center justify-between h-14 px-4">
-          <Link to="/dashboard"><img src={logo} alt="Logo" className="h-9 object-contain" /></Link>
-          <ThemeToggle />
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border">
+        <div className="container mx-auto flex items-center justify-between h-16 px-4">
+          <Link to="/"><img src={logo} alt="Logo" className="h-12 object-contain" /></Link>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
+            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground px-2">
+              {user?.email}
+            </div>
+
+            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="md:hidden" title="البروفايل">
+              <UserCircle className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="md:hidden" title="خروج">
+              <LogOut className="h-5 w-5" />
+            </Button>
+
+            <Button variant="ghost" onClick={() => navigate('/profile')} className="hidden md:inline-flex gap-2">
+              <UserCircle className="h-4 w-4" /> البروفايل
+            </Button>
+            <Button variant="ghost" onClick={handleSignOut} className="hidden md:inline-flex gap-2">
+              <LogOut className="h-4 w-4" /> خروج
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Board Action Bar */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="border-b border-border/50"
-        style={{ backgroundColor: `${board.background_color}10` }}
+        className="border-b border-border/50 bg-muted/30"
       >
         <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="h-8 w-8">
               <ArrowRight className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
               <Icon className="h-5 w-5 text-muted-foreground" />
-              <h1 className="text-lg font-bold font-['Space_Grotesk'] truncate max-w-[200px] sm:max-w-none">{board.title}</h1>
+              <h1 className="text-lg font-bold font-['Space_Grotesk'] truncate max-w-[220px] sm:max-w-none">{board.title}</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {isOwner && <BoardSettingsDialog board={board} />}
             {hasAdminAccess && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
             {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
           </div>
         </div>
       </motion.div>
 
-      {/* Board Content */}
       <main className="container mx-auto px-4 py-8">
-        {board.description && (
-          <p className="text-muted-foreground mb-6 text-center">{board.description}</p>
-        )}
+        {board.description && <p className="text-muted-foreground mb-6 text-center">{board.description}</p>}
 
         {postsLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
-            ))}
+            {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
           </div>
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -162,7 +188,7 @@ export default function BoardView() {
               <Plus className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-lg font-semibold mb-2 font-['Space_Grotesk']">اللوحة فاضية</h3>
-            <p className="text-muted-foreground mb-4">أضف أول بوست على هذي اللوحة</p>
+            <p className="text-muted-foreground mb-4">أضف أول منشور في اللوحة</p>
             {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
           </div>
         ) : (
@@ -180,3 +206,4 @@ export default function BoardView() {
     </div>
   );
 }
+
