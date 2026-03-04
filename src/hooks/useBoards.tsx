@@ -27,6 +27,7 @@ export function useBoards() {
       const { data, error } = await supabase
         .from('boards')
         .select('*')
+        .eq('user_id', user!.id)
         .eq('is_archived', false)
         .order('updated_at', { ascending: false });
       if (error) throw error;

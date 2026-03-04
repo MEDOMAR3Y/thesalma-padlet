@@ -53,16 +53,32 @@ export default function Profile() {
     if (!user) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('profiles').upsert({
-        user_id: user.id,
-        display_name: displayName.trim() || null,
-        bio: bio.trim() || null,
-        avatar_url: avatarUrl || null,
-      }, { onConflict: 'user_id' });
+      // Try update first
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        const { error } = await supabase.from('profiles').update({
+          display_name: displayName.trim() || null,
+          bio: bio.trim() || null,
+          avatar_url: avatarUrl || null,
+        }).eq('user_id', user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('profiles').insert({
+          user_id: user.id,
+          display_name: displayName.trim() || null,
+          bio: bio.trim() || null,
+          avatar_url: avatarUrl || null,
+        });
+        if (error) throw error;
+      }
       toast.success('تم حفظ البروفايل!');
-    } catch {
+    } catch (err: any) {
+      console.error('Profile save error:', err);
       toast.error('حصل خطأ أثناء الحفظ');
     } finally {
       setLoading(false);
@@ -80,14 +96,15 @@ export default function Profile() {
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-      await supabase.from('profiles').upsert({
-        user_id: user.id,
-        avatar_url: data.publicUrl,
-        display_name: displayName.trim() || null,
-        bio: bio.trim() || null,
-      }, { onConflict: 'user_id' });
-
       setAvatarUrl(data.publicUrl);
+
+      // Save immediately
+      const { data: existing } = await supabase.from('profiles').select('id').eq('user_id', user.id).maybeSingle();
+      if (existing) {
+        await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('user_id', user.id);
+      } else {
+        await supabase.from('profiles').insert({ user_id: user.id, avatar_url: data.publicUrl });
+      }
       toast.success('تم تحديث الصورة!');
     } catch {
       toast.error('فشل رفع الصورة');
@@ -123,19 +140,16 @@ export default function Profile() {
     <div className="min-h-screen bg-background" dir="rtl">
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/"><img src={logo} alt="Logo" className="h-12 object-contain" /></Link>
-
+          <Link to="/"><img src={logo} alt="Logo" className="h-14 object-contain" /></Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <span className="hidden md:inline text-sm text-muted-foreground">{user?.email}</span>
-
             <Button variant="ghost" size="icon" className="md:hidden" title="البروفايل">
               <UserCircle className="h-5 w-5" />
             </Button>
             <Button variant="ghost" size="icon" onClick={handleSignOut} className="md:hidden" title="خروج">
               <LogOut className="h-5 w-5" />
             </Button>
-
             <Button variant="ghost" className="hidden md:inline-flex gap-2">
               <UserCircle className="h-4 w-4" /> البروفايل
             </Button>
@@ -223,4 +237,3 @@ export default function Profile() {
     </div>
   );
 }
-

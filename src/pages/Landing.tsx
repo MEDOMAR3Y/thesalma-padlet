@@ -38,7 +38,7 @@ export default function Landing() {
       <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-background/60 border-b border-border/50">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
           <Link to="/">
-            <img src={logo} alt="The Salma Padlet" className="h-10 object-contain" />
+            <img src={logo} alt="The Salma Padlet" className="h-14 object-contain" />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -70,11 +70,21 @@ export default function Landing() {
         </div>
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto text-center relative z-10 max-w-5xl">
+          {/* Big Logo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-8"
+          >
+            <img src={logo} alt="The Salma Padlet" className="h-40 sm:h-52 md:h-64 mx-auto object-contain drop-shadow-xl" />
+          </motion.div>
+
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8"
           >
             <Sparkles className="h-4 w-4" />
@@ -84,8 +94,8 @@ export default function Landing() {
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-5xl sm:text-6xl md:text-8xl font-bold font-['Space_Grotesk'] leading-[1.1] mb-8"
+            transition={{ duration: 0.7, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="text-4xl sm:text-5xl md:text-7xl font-bold font-['Space_Grotesk'] leading-[1.1] mb-8"
           >
             نظّم أفكارك{' '}
             <br className="hidden sm:block" />
@@ -97,16 +107,16 @@ export default function Landing() {
           <motion.p
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="text-lg sm:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
           >
-            أنشئ لوحات تفاعلية، شارك أفكارك مع فريقك، ونظّم محتواك بطريقة بصرية جذابة مع The Salma Padlet
+            أنشئ لوحات تفاعلية، شارك أفكارك مع فريقك، ونظّم محتواك بطريقة بصرية جذابة
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Button size="lg" asChild className="text-lg px-10 h-14 rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
@@ -124,7 +134,7 @@ export default function Landing() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
+            transition={{ duration: 0.7, delay: 0.8 }}
             className="flex justify-center gap-8 sm:gap-16 mt-16"
           >
             {stats.map((s, i) => (
@@ -132,7 +142,7 @@ export default function Landing() {
                 key={s.label}
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 + i * 0.1, type: 'spring', stiffness: 200 }}
+                transition={{ delay: 0.9 + i * 0.1, type: 'spring', stiffness: 200 }}
                 className="text-center"
               >
                 <div className="text-3xl sm:text-4xl font-bold font-['Space_Grotesk'] text-primary">{s.value}</div>
@@ -154,7 +164,6 @@ export default function Landing() {
         >
           <div className="rounded-3xl border border-border bg-card/50 backdrop-blur-sm p-3 shadow-2xl shadow-primary/5">
             <div className="rounded-2xl bg-card overflow-hidden border border-border/50">
-              {/* Mock header */}
               <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/30">
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-destructive/60" />
@@ -165,7 +174,6 @@ export default function Landing() {
                   <div className="h-6 rounded-lg bg-muted/50 max-w-xs mx-auto" />
                 </div>
               </div>
-              {/* Mock content - masonry grid */}
               <div className="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {[
                   { h: 'h-28', bg: 'bg-violet-500/20' },
@@ -196,15 +204,8 @@ export default function Landing() {
       <section className="py-24 px-4 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.02] to-transparent" />
         <div className="container mx-auto max-w-6xl relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-['Space_Grotesk'] mb-4">
-              كل اللي تحتاجه في مكان واحد
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-['Space_Grotesk'] mb-4">كل اللي تحتاجه في مكان واحد</h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">أدوات قوية ومرنة لتنظيم أفكارك والتعاون مع فريقك</p>
           </motion.div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -233,14 +234,7 @@ export default function Landing() {
       {/* How it works */}
       <section className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
-          <motion.h2
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-3xl sm:text-4xl font-bold text-center mb-16 font-['Space_Grotesk']"
-          >
-            كيف يشتغل؟
-          </motion.h2>
+          <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-3xl sm:text-4xl font-bold text-center mb-16 font-['Space_Grotesk']">كيف يشتغل؟</motion.h2>
           <div className="space-y-8">
             {[
               { step: '1', title: 'أنشئ حسابك', desc: 'سجّل مجاناً في ثواني وابدأ فوراً' },
@@ -279,16 +273,10 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
             className="relative p-12 sm:p-16 rounded-[2rem] overflow-hidden"
           >
-            {/* CTA background */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-card to-accent/10 border border-border rounded-[2rem]" />
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-            
             <div className="relative z-10">
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="inline-block mb-6"
-              >
+              <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 4, repeat: Infinity }} className="inline-block mb-6">
                 <Star className="h-12 w-12 text-primary" />
               </motion.div>
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 font-['Space_Grotesk']">جاهز تبدأ؟</h2>

@@ -43,7 +43,7 @@ const App = () => (
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/board/:id" element={<ProtectedRoute><BoardView /></ProtectedRoute>} />
+            <Route path="/board/:id" element={<BoardView />} />
             <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -54,4 +54,3 @@ const App = () => (
 );
 
 export default App;
-

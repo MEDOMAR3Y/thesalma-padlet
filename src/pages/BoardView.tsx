@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,67 +9,35 @@ import { Board } from '@/hooks/useBoards';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import CreatePostDialog from '@/components/CreatePostDialog';
-import PostCard from '@/components/PostCard';
-import ShareBoardDialog from '@/components/ShareBoardDialog';
 import BoardSettingsDialog from '@/components/BoardSettingsDialog';
 import { ArrowRight, Layout, Grid3X3, Columns3, Network, Plus, UserCircle, LogOut } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
+import PostCard from '@/components/PostCard';
 import logo from '@/assets/logo.png';
 
 const layoutIcons = { wall: Layout, grid: Grid3X3, column: Columns3, map: Network };
 
 export default function BoardView() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { shares } = useBoardShares(id!);
-  const token = searchParams.get('token');
 
+  // Auto-associate logged-in user with board shares by email
   useEffect(() => {
     if (!user || !id) return;
-
     (async () => {
       if (user.email) {
         await supabase
           .from('board_shares')
-          .update({ user_id: user.id, email: user.email.toLowerCase() })
+          .update({ user_id: user.id })
           .eq('board_id', id)
           .is('user_id', null)
           .ilike('email', user.email);
       }
-
-      if (!token) return;
-
-      const { data: share } = await supabase
-        .from('board_shares')
-        .select('*')
-        .eq('board_id', id)
-        .eq('share_token', token)
-        .maybeSingle();
-
-      if (share && !share.user_id) {
-        await supabase.from('board_shares').update({ user_id: user.id, email: user.email?.toLowerCase() || null }).eq('id', share.id);
-      } else if (share && share.user_id !== user.id) {
-        const { data: existing } = await supabase
-          .from('board_shares')
-          .select('id')
-          .eq('board_id', id)
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (!existing) {
-          await supabase.from('board_shares').insert({
-            board_id: id,
-            user_id: user.id,
-            email: user.email?.toLowerCase() || null,
-            permission: share.permission,
-          });
-        }
-      }
     })();
-  }, [token, user, id]);
+  }, [user, id]);
 
   const userShare = shares.find(s => s.user_id === user?.id || (user?.email && s.email?.toLowerCase() === user.email.toLowerCase()));
 
@@ -103,14 +71,15 @@ export default function BoardView() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4" dir="rtl">
         <p className="text-xl text-muted-foreground">اللوحة غير موجودة</p>
-        <Button asChild><Link to="/profile">رجوع للبروفايل</Link></Button>
+        <Button asChild><Link to="/">الرئيسية</Link></Button>
       </div>
     );
   }
 
   const Icon = layoutIcons[board.layout];
   const isOwner = user?.id === board.user_id;
-  const hasWriteAccess = isOwner || userShare?.permission === 'write' || userShare?.permission === 'admin';
+  const isBlocked = userShare?.permission === 'blocked';
+  const hasWriteAccess = !isBlocked && (isOwner || userShare?.permission === 'write' || userShare?.permission === 'admin' || board.visibility === 'public');
   const hasAdminAccess = isOwner || userShare?.permission === 'admin';
 
   const getLayoutClasses = () => {
@@ -126,28 +95,28 @@ export default function BoardView() {
     <div className="min-h-screen bg-background" dir="rtl">
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="container mx-auto flex items-center justify-between h-16 px-4">
-          <Link to="/"><img src={logo} alt="Logo" className="h-12 object-contain" /></Link>
-
+          <Link to="/"><img src={logo} alt="Logo" className="h-14 object-contain" /></Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-
-            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground px-2">
-              {user?.email}
-            </div>
-
-            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="md:hidden" title="البروفايل">
-              <UserCircle className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="md:hidden" title="خروج">
-              <LogOut className="h-5 w-5" />
-            </Button>
-
-            <Button variant="ghost" onClick={() => navigate('/profile')} className="hidden md:inline-flex gap-2">
-              <UserCircle className="h-4 w-4" /> البروفايل
-            </Button>
-            <Button variant="ghost" onClick={handleSignOut} className="hidden md:inline-flex gap-2">
-              <LogOut className="h-4 w-4" /> خروج
-            </Button>
+            {user ? (
+              <>
+                <span className="hidden md:inline text-sm text-muted-foreground">{user.email}</span>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="md:hidden" title="البروفايل">
+                  <UserCircle className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="md:hidden" title="خروج">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/profile')} className="hidden md:inline-flex gap-2">
+                  <UserCircle className="h-4 w-4" /> البروفايل
+                </Button>
+                <Button variant="ghost" onClick={handleSignOut} className="hidden md:inline-flex gap-2">
+                  <LogOut className="h-4 w-4" /> خروج
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="default" size="sm"><Link to="/auth/login">تسجيل دخول</Link></Button>
+            )}
           </div>
         </div>
       </header>
@@ -159,7 +128,7 @@ export default function BoardView() {
       >
         <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={() => navigate(user ? '/profile' : '/')} className="h-8 w-8">
               <ArrowRight className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
@@ -168,9 +137,8 @@ export default function BoardView() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isOwner && <BoardSettingsDialog board={board} />}
-            {hasAdminAccess && <ShareBoardDialog boardId={board.id} currentVisibility={board.visibility} />}
-            {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
+            {hasAdminAccess && <BoardSettingsDialog board={board} />}
+            {hasWriteAccess && user && <CreatePostDialog boardId={board.id} />}
           </div>
         </div>
       </motion.div>
@@ -189,7 +157,7 @@ export default function BoardView() {
             </div>
             <h3 className="text-lg font-semibold mb-2 font-['Space_Grotesk']">اللوحة فاضية</h3>
             <p className="text-muted-foreground mb-4">أضف أول منشور في اللوحة</p>
-            {hasWriteAccess && <CreatePostDialog boardId={board.id} />}
+            {hasWriteAccess && user && <CreatePostDialog boardId={board.id} />}
           </div>
         ) : (
           <div className={getLayoutClasses()}>
@@ -206,4 +174,3 @@ export default function BoardView() {
     </div>
   );
 }
-
