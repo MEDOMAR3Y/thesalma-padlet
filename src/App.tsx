@@ -44,7 +44,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/board/:id" element={<BoardView />} />
-            <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
+            <Route path="/b/:shortId" element={<BoardView />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

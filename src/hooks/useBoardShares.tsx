@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { encodeBoardId } from '@/lib/shortBoardId';
 
 export interface BoardShare {
   id: string;
@@ -114,7 +115,7 @@ export function useBoardShares(boardId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] }),
   });
 
-  const getShareLink = async () => boardId;
+  const getShareLink = async () => `/b/${encodeBoardId(boardId)}`;
 
   return {
     shares: sharesQuery.data ?? [],
@@ -125,4 +126,5 @@ export function useBoardShares(boardId: string) {
     getShareLink,
   };
 }
+
 

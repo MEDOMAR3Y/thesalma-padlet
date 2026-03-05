@@ -15,43 +15,45 @@ import { AnimatePresence, motion } from 'framer-motion';
 import ThemeToggle from '@/components/ThemeToggle';
 import PostCard from '@/components/PostCard';
 import logo from '@/assets/logo.png';
+import { decodeBoardId } from '@/lib/shortBoardId';
 
 const layoutIcons = { wall: Layout, grid: Grid3X3, column: Columns3, map: Network };
 
 export default function BoardView() {
-  const { id } = useParams<{ id: string }>();
+  const { id, shortId } = useParams<{ id?: string; shortId?: string }>();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { shares } = useBoardShares(id!);
 
-  // Auto-associate logged-in user with board shares by email
+  const resolvedBoardId = id ?? (shortId ? decodeBoardId(shortId) ?? undefined : undefined);
+  const { shares } = useBoardShares(resolvedBoardId ?? '');
+
   useEffect(() => {
-    if (!user || !id) return;
+    if (!user || !resolvedBoardId) return;
     (async () => {
       if (user.email) {
         await supabase
           .from('board_shares')
           .update({ user_id: user.id })
-          .eq('board_id', id)
+          .eq('board_id', resolvedBoardId)
           .is('user_id', null)
           .ilike('email', user.email);
       }
     })();
-  }, [user, id]);
+  }, [user, resolvedBoardId]);
 
   const userShare = shares.find(s => s.user_id === user?.id || (user?.email && s.email?.toLowerCase() === user.email.toLowerCase()));
 
   const boardQuery = useQuery({
-    queryKey: ['board', id],
+    queryKey: ['board', resolvedBoardId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('boards').select('*').eq('id', id!).single();
+      const { data, error } = await supabase.from('boards').select('*').eq('id', resolvedBoardId!).single();
       if (error) throw error;
       return data as Board;
     },
-    enabled: !!id,
+    enabled: !!resolvedBoardId,
   });
 
-  const { posts, isLoading: postsLoading } = usePosts(id!);
+  const { posts, isLoading: postsLoading } = usePosts(resolvedBoardId ?? '');
   const board = boardQuery.data;
 
   const handleSignOut = async () => {
@@ -67,7 +69,7 @@ export default function BoardView() {
     );
   }
 
-  if (!board) {
+  if (!resolvedBoardId || !board) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4" dir="rtl">
         <p className="text-xl text-muted-foreground">اللوحة غير موجودة</p>

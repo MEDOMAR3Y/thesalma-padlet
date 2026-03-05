@@ -27,7 +27,7 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
   const { updateBoard } = useBoards();
 
   // Sharing
-  const { shares, addShare, removeShare, updatePermission } = useBoardShares(board.id);
+  const { shares, addShare, removeShare, updatePermission, getShareLink } = useBoardShares(board.id);
   const [identifier, setIdentifier] = useState('');
   const [permission, setPermission] = useState<BoardShare['permission']>('read');
   const [copied, setCopied] = useState(false);
@@ -57,7 +57,8 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
 
   const handleCopyLink = async () => {
     try {
-      const url = `${window.location.origin}/board/${board.id}`;
+      const shortPath = await getShareLink();
+      const url = `${window.location.origin}${shortPath}`;
       await navigator.clipboard.writeText(url);
       setCopied(true);
       toast.success('تم نسخ رابط المشاركة!');
