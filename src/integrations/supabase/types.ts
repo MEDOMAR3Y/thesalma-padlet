@@ -129,6 +129,36 @@ export type Database = {
           },
         ]
       }
+      email_verifications: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          otp_code: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          otp_code: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -157,6 +187,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
       }
       posts: {
         Row: {
@@ -223,6 +280,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          email_verified: boolean
           id: string
           updated_at: string
           user_id: string
@@ -232,6 +290,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_verified?: boolean
           id?: string
           updated_at?: string
           user_id: string
@@ -241,6 +300,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          email_verified?: boolean
           id?: string
           updated_at?: string
           user_id?: string
