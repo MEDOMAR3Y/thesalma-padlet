@@ -29,35 +29,35 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-6" dir="rtl">
-      <div className="absolute inset-0 opacity-20 overflow-hidden">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background p-4" dir="rtl">
+      <div className="absolute inset-0 opacity-20 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 right-1/3 w-72 h-72 rounded-full bg-primary/20 blur-[100px]" />
       </div>
-      <Card className="w-full max-w-md relative z-10 border-border shadow-lg mx-auto">
-        <CardHeader className="text-center">
-          <Link to="/" className="inline-block mb-2">
-            <img src={logo} alt="The Salma Padlet" className="h-12 mx-auto object-contain" />
+      <Card className="w-full max-w-sm relative z-10 border-border shadow-lg">
+        <CardHeader className="text-center pb-4">
+          <Link to="/" className="inline-block mb-1">
+            <img src={logo} alt="The Salma Padlet" className="h-10 mx-auto object-contain" />
           </Link>
-          <CardTitle className="text-2xl font-['Space_Grotesk']">تسجيل الدخول</CardTitle>
-          <CardDescription>ادخل بياناتك للوصول لحسابك</CardDescription>
+          <CardTitle className="text-xl font-['Space_Grotesk']">تسجيل الدخول</CardTitle>
+          <CardDescription className="text-sm">ادخل بياناتك للوصول لحسابك</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
-              <Input id="email" type="email" placeholder="email@example.com" value={email} onChange={e => setEmail(e.target.value)} required dir="ltr" />
+          <CardContent className="space-y-3 pb-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm">البريد الإلكتروني</Label>
+              <Input id="email" type="email" placeholder="email@example.com" value={email} onChange={e => setEmail(e.target.value)} required dir="ltr" className="h-10" />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">كلمة السر</Label>
-              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required dir="ltr" />
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm">كلمة السر</Label>
+              <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required dir="ltr" className="h-10" />
             </div>
-            <Link to="/auth/forgot-password" className="text-sm text-primary hover:underline block">نسيت كلمة السر؟</Link>
+            <Link to="/auth/forgot-password" className="text-xs text-primary hover:underline block">نسيت كلمة السر؟</Link>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={loading}>
+          <CardFooter className="flex flex-col gap-3 pt-0">
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-10" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'تسجيل دخول'}
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               ماعندك حساب؟{' '}
               <Link to="/auth/signup" className="text-primary hover:underline">أنشئ حساب جديد</Link>
             </p>

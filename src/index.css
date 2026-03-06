@@ -129,20 +129,44 @@
   color: hsl(var(--muted-foreground));
   pointer-events: none;
   height: 0;
+  opacity: 0.5;
 }
 
 .tiptap ul {
   list-style-type: disc;
-  padding-right: 1.2em;
+  padding-right: 1.5em;
+  margin: 0.3em 0;
 }
 
 .tiptap ol {
   list-style-type: decimal;
-  padding-right: 1.2em;
+  padding-right: 1.5em;
+  margin: 0.3em 0;
 }
 
 .tiptap p {
-  margin: 0.25em 0;
+  margin: 0.2em 0;
+}
+
+.tiptap h1 {
+  font-size: 1.5em;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0.4em 0 0.2em;
+}
+
+.tiptap h2 {
+  font-size: 1.25em;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0.35em 0 0.15em;
+}
+
+.tiptap h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0.3em 0 0.1em;
 }
 
 .tiptap strong {
@@ -155,4 +179,9 @@
 
 .tiptap u {
   text-decoration: underline;
+}
+
+.tiptap mark {
+  border-radius: 0.15em;
+  padding: 0.05em 0.15em;
 }
