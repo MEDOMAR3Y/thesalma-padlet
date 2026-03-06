@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { encodeBoardId } from '@/lib/shortBoardId';
+import { sendEmail, buildBoardInviteEmail } from '@/lib/email';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface BoardShare {
   id: string;
