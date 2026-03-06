@@ -13,6 +13,8 @@ import {
   Heading1, Heading2, Heading3, Highlighter, Palette,
 } from 'lucide-react';
 import { useEffect } from 'react';
+import {
+  Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
