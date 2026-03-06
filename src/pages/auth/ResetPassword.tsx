@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,46 +7,19 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check for recovery token in URL
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      setReady(true);
-    }
-    // Also listen for PASSWORD_RECOVERY event
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const token = searchParams.get('token');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password.length < 6) {
-      toast.error('كلمة السر لازم تكون 6 حروف على الأقل');
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('تم تغيير كلمة السر بنجاح!');
-      navigate('/profile');
-    }
-  };
-
-  if (!ready) {
+  if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background" dir="rtl">
         <Card className="w-full max-w-md border-border shadow-lg text-center p-8">
           <p className="text-muted-foreground">رابط غير صالح أو منتهي الصلاحية.</p>
           <Link to="/auth/forgot-password" className="text-primary hover:underline mt-4 inline-block">طلب رابط جديد</Link>
@@ -55,10 +28,39 @@ export default function ResetPassword() {
     );
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password.length < 6) {
+      toast.error('كلمة السر لازم تكون 6 حروف على الأقل');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-password', {
+        body: { token, newPassword: password },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        setLoading(false);
+        return;
+      }
+      toast.success('تم تغيير كلمة السر بنجاح!');
+      navigate('/auth/login');
+    } catch (err: any) {
+      toast.error(err.message || 'حصل خطأ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4" dir="rtl">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4" dir="rtl">
       <Card className="w-full max-w-md border-border shadow-lg">
         <CardHeader className="text-center">
+          <Link to="/" className="inline-block mb-2">
+            <img src={logo} alt="The Salma Padlet" className="h-12 mx-auto object-contain" />
+          </Link>
           <CardTitle className="text-2xl font-['Space_Grotesk']">كلمة سر جديدة</CardTitle>
           <CardDescription>اختار كلمة سر جديدة لحسابك</CardDescription>
         </CardHeader>
