@@ -72,16 +72,7 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label className="text-sm">لون المنشور</Label>
-            <div className="flex gap-2 flex-wrap">
-              {POST_COLORS.map(c => (
-                <button key={c} type="button" onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${color === c ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-border hover:scale-105'}`}
-                  style={{ backgroundColor: c }} />
-              ))}
-            </div>
-          </div>
+          <ColorPicker color={color} onChange={setColor} label="لون المنشور" />
 
           <div className="flex gap-2">
             <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 h-11" disabled={loading}>
