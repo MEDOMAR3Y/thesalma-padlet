@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { encodeBoardId } from '@/lib/shortBoardId';
-import { sendEmail, buildBoardInviteEmail } from '@/lib/email';
-import { useAuth } from '@/hooks/useAuth';
 
 export interface BoardShare {
   id: string;
@@ -19,7 +17,6 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function useBoardShares(boardId: string) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   const sharesQuery = useQuery({
     queryKey: ['board-shares', boardId],
@@ -98,19 +95,6 @@ export function useBoardShares(boardId: string) {
         email: targetEmail,
       });
       if (error) throw error;
-
-      // Send invite email if sharing by email
-      if (targetEmail && permission !== 'blocked') {
-        try {
-          const { data: board } = await supabase.from('boards').select('title').eq('id', boardId).single();
-          const shortLink = `${window.location.origin}/b/${encodeBoardId(boardId)}`;
-          const inviterName = user?.email?.split('@')[0] || 'مستخدم';
-          const emailContent = buildBoardInviteEmail(board?.title || 'لوحة', inviterName, shortLink);
-          await sendEmail({ to: targetEmail, ...emailContent });
-        } catch (emailErr) {
-          console.warn('Failed to send invite email:', emailErr);
-        }
-      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['board-shares', boardId] }),
   });
@@ -142,5 +126,3 @@ export function useBoardShares(boardId: string) {
     getShareLink,
   };
 }
-
-
