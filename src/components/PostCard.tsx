@@ -192,7 +192,7 @@ export default function PostCard({ post, boardId }: PostCardProps) {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48" dir="rtl">
+              <DropdownMenuContent align="end" className="w-48">
                 {/* Copy actions - available to everyone */}
                 {post.content && (
                   <DropdownMenuItem onClick={handleCopyContent}>

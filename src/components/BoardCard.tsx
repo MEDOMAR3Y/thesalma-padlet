@@ -96,7 +96,7 @@ export default function BoardCard({ board }: { board: Board }) {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48" dir="rtl" onClick={e => e.stopPropagation()}>
+              <DropdownMenuContent align="end" className="w-48" onClick={e => e.stopPropagation()}>
                 <DropdownMenuItem onClick={() => navigate(`/board/${board.id}`)}>
                   <Eye className="h-4 w-4 ml-2" /> فتح اللوحة
                 </DropdownMenuItem>
