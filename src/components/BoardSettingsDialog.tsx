@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ColorPicker from '@/components/ColorPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -162,20 +163,7 @@ export default function BoardSettingsDialog({ board, externalOpen, onExternalOpe
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label>لون الخلفية</Label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${color === c ? 'border-foreground scale-110' : 'border-border'}`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker color={color} onChange={setColor} label="لون الخلفية" />
 
           <Button type="submit" className="w-full" disabled={updateBoard.isPending}>
             {updateBoard.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'حفظ التعديلات'}
