@@ -51,7 +51,7 @@ export default function Login() {
               <Label htmlFor="password" className="text-sm">كلمة السر</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required dir="ltr" className="h-10" />
             </div>
-            <Link to="/auth/forgot-password" className="text-xs text-primary hover:underline block">نسيت كلمة السر؟</Link>
+            {/* Forgot password - disabled for now */}
           </CardContent>
           <CardFooter className="flex flex-col gap-3 pt-0">
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-10" disabled={loading}>

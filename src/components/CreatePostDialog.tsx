@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { isVideoUrl } from '@/lib/videoEmbed';
 import { toast } from 'sonner';
 import RichTextEditor from '@/components/RichTextEditor';
+import ColorPicker from '@/components/ColorPicker';
 
 const POST_COLORS = ['#ffffff', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#f3e8ff', '#fed7d7', '#e0e7ff'];
 
@@ -161,21 +162,7 @@ export default function CreatePostDialog({ boardId, trigger }: CreatePostDialogP
             )}
           </div>
 
-          {/* Color picker */}
-          <div className="space-y-2">
-            <Label className="text-sm">لون المنشور</Label>
-            <div className="flex gap-2 flex-wrap">
-              {POST_COLORS.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${color === c ? 'border-foreground scale-110 ring-2 ring-primary/30' : 'border-border hover:scale-105'}`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
+          <ColorPicker color={color} onChange={setColor} label="لون المنشور" />
 
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-11" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'نشر'}
