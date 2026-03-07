@@ -56,9 +56,21 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
             onChange={setContent}
             placeholder="محتوى المنشور..."
           />
+
           {(post.post_type === 'link') && (
-            <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="رابط..." dir="ltr" />
+            <div className="space-y-1">
+              <Label className="text-sm">الرابط</Label>
+              <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..." dir="ltr" />
+            </div>
           )}
+
+          {post.post_type === 'image' && post.file_url && (
+            <div className="space-y-1">
+              <Label className="text-sm">الصورة الحالية</Label>
+              <img src={post.file_url} alt="" className="w-full max-h-32 object-cover rounded-lg border border-border" />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label className="text-sm">لون المنشور</Label>
             <div className="flex gap-2 flex-wrap">
@@ -69,9 +81,15 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
               ))}
             </div>
           </div>
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-11" disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'حفظ التعديلات'}
-          </Button>
+
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 h-11" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'حفظ التعديلات'}
+            </Button>
+            <Button type="button" variant="outline" className="h-11" onClick={() => onOpenChange(false)}>
+              إلغاء
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

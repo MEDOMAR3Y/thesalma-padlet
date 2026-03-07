@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,18 +13,32 @@ import { toast } from 'sonner';
 
 interface BoardSettingsDialogProps {
   board: Board;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#06b6d4'];
 
-export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps) {
-  const [open, setOpen] = useState(false);
+export default function BoardSettingsDialog({ board, externalOpen, onExternalOpenChange }: BoardSettingsDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onExternalOpenChange || setInternalOpen;
+
   const [title, setTitle] = useState(board.title);
   const [description, setDescription] = useState(board.description || '');
   const [layout, setLayout] = useState(board.layout);
   const [visibility, setVisibility] = useState(board.visibility);
   const [color, setColor] = useState(board.background_color || COLORS[0]);
   const { updateBoard } = useBoards();
+
+  // Sync state when board changes
+  useEffect(() => {
+    setTitle(board.title);
+    setDescription(board.description || '');
+    setLayout(board.layout);
+    setVisibility(board.visibility);
+    setColor(board.background_color || COLORS[0]);
+  }, [board]);
 
   // Sharing
   const { shares, addShare, removeShare, updatePermission, getShareLink } = useBoardShares(board.id);
@@ -90,21 +104,24 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
     blocked: '🚫 محظور',
   };
 
+  const trigger = externalOpen === undefined ? (
+    <DialogTrigger asChild>
+      <Button variant="outline" size="sm" className="gap-2">
+        <Settings className="h-4 w-4" />
+        إعدادات
+      </Button>
+    </DialogTrigger>
+  ) : null;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Settings className="h-4 w-4" />
-          إعدادات
-        </Button>
-      </DialogTrigger>
+      {trigger}
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="font-['Space_Grotesk']">إعدادات اللوحة</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSave} className="space-y-5">
-          {/* Basic Info */}
           <div className="space-y-3">
             <div className="space-y-1">
               <Label>العنوان</Label>
@@ -116,7 +133,6 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
             </div>
           </div>
 
-          {/* Layout & Visibility */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>التخطيط</Label>
@@ -139,14 +155,13 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
                     <span className="flex items-center gap-2"><Lock className="h-3 w-3" /> خاصة</span>
                   </SelectItem>
                   <SelectItem value="public">
-                    <span className="flex items-center gap-2"><Globe className="h-3 w-3" /> عامة (لأي شخص بالرابط)</span>
+                    <span className="flex items-center gap-2"><Globe className="h-3 w-3" /> عامة</span>
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Color */}
           <div className="space-y-1">
             <Label>لون الخلفية</Label>
             <div className="flex gap-2 flex-wrap">
@@ -167,17 +182,14 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
           </Button>
         </form>
 
-        {/* Sharing Section */}
         <div className="border-t border-border pt-5 mt-2 space-y-4">
           <h3 className="font-semibold font-['Space_Grotesk']">المشاركة</h3>
 
-          {/* Copy Link */}
           <Button onClick={handleCopyLink} variant="outline" className="w-full gap-2">
             {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             {copied ? 'تم النسخ!' : 'نسخ رابط اللوحة'}
           </Button>
 
-          {/* Invite / Block */}
           <div className="space-y-2">
             <Label>دعوة أو حظر مستخدم</Label>
             <div className="flex gap-2">
@@ -205,7 +217,6 @@ export default function BoardSettingsDialog({ board }: BoardSettingsDialogProps)
             </div>
           </div>
 
-          {/* Shares List */}
           {shares.filter(s => s.email || s.user_id).length > 0 && (
             <div className="space-y-2">
               <Label>المشاركون</Label>

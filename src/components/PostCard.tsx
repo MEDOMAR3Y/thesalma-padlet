@@ -3,13 +3,23 @@ import { Post, usePosts, useLikes, useComments } from '@/hooks/usePosts';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, MessageCircle, MoreVertical, Trash2, FileText, Send, X, User, Pencil } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Heart, MessageCircle, MoreVertical, Trash2, FileText, Send, X, User, Pencil, Copy, ExternalLink, Palette, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getVideoEmbed } from '@/lib/videoEmbed';
 import EditPostDialog from '@/components/EditPostDialog';
 import LinkPreview from '@/components/LinkPreview';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function PostLikes({ postId }: { postId: string }) {
   const { isLiked, count, toggleLike } = useLikes(postId);
@@ -87,11 +97,12 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, boardId }: PostCardProps) {
-  const { deletePost } = usePosts(boardId);
+  const { deletePost, updatePost } = usePosts(boardId);
   const { user } = useAuth();
   const isOwner = post.user_id === user?.id;
   const videoEmbed = post.link_url ? getVideoEmbed(post.link_url) : null;
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const resolvedBackground = post.color?.toLowerCase() === '#ffffff'
     ? 'hsl(var(--card))'
@@ -103,6 +114,28 @@ export default function PostCard({ post, boardId }: PostCardProps) {
       toast.success('تم حذف البوست');
     } catch { toast.error('حصل خطأ'); }
   };
+
+  const handleCopyContent = () => {
+    const textContent = post.content?.replace(/<[^>]*>/g, '') || '';
+    navigator.clipboard.writeText(textContent);
+    toast.success('تم نسخ المحتوى');
+  };
+
+  const handleCopyLink = () => {
+    if (post.link_url) {
+      navigator.clipboard.writeText(post.link_url);
+      toast.success('تم نسخ الرابط');
+    }
+  };
+
+  const handleChangeColor = async (newColor: string) => {
+    try {
+      await updatePost.mutateAsync({ id: post.id, color: newColor });
+      toast.success('تم تغيير اللون');
+    } catch { toast.error('حصل خطأ'); }
+  };
+
+  const POST_COLORS = ['#ffffff', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#f3e8ff', '#fed7d7', '#e0e7ff'];
 
   return (
     <>
@@ -125,6 +158,9 @@ export default function PostCard({ post, boardId }: PostCardProps) {
               )}
             </div>
             <span className="text-xs font-medium text-muted-foreground">{post.profile?.display_name || 'مستخدم'}</span>
+            <span className="text-xs text-muted-foreground/60 mr-auto">
+              {new Date(post.created_at).toLocaleDateString('ar-SA')}
+            </span>
           </div>
 
           {post.content && (
@@ -149,28 +185,83 @@ export default function PostCard({ post, boardId }: PostCardProps) {
               <PostLikes postId={post.id} />
               <PostComments postId={post.id} />
             </div>
-            {isOwner && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                    <Pencil className="h-4 w-4 ml-2" /> تعديل
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {/* Copy actions - available to everyone */}
+                {post.content && (
+                  <DropdownMenuItem onClick={handleCopyContent}>
+                    <Copy className="h-4 w-4 ml-2" /> نسخ المحتوى
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                    <Trash2 className="h-4 w-4 ml-2" /> حذف
+                )}
+                {post.link_url && (
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    <ExternalLink className="h-4 w-4 ml-2" /> نسخ الرابط
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                )}
+                {post.file_url && (
+                  <DropdownMenuItem onClick={() => window.open(post.file_url!, '_blank')}>
+                    <ExternalLink className="h-4 w-4 ml-2" /> فتح الملف
+                  </DropdownMenuItem>
+                )}
+
+                {/* Owner actions */}
+                {isOwner && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
+                      <Pencil className="h-4 w-4 ml-2" /> تعديل المنشور
+                    </DropdownMenuItem>
+
+                    {/* Quick color change submenu */}
+                    <DropdownMenuItem className="p-0" onSelect={e => e.preventDefault()}>
+                      <div className="flex items-center gap-2 px-2 py-1.5 w-full">
+                        <Palette className="h-4 w-4 ml-1 shrink-0" />
+                        <span className="text-sm ml-1">اللون</span>
+                        <div className="flex gap-1 mr-auto">
+                          {POST_COLORS.slice(0, 6).map(c => (
+                            <button
+                              key={c}
+                              onClick={() => handleChangeColor(c)}
+                              className={`w-4 h-4 rounded-full border transition-all hover:scale-125 ${post.color === c ? 'border-foreground ring-1 ring-primary/50' : 'border-border/50'}`}
+                              style={{ backgroundColor: c === '#ffffff' ? 'hsl(var(--card))' : c }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setDeleteConfirmOpen(true)} className="text-destructive focus:text-destructive">
+                      <Trash2 className="h-4 w-4 ml-2" /> حذف المنشور
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </motion.div>
 
       {isOwner && <EditPostDialog post={post} boardId={boardId} open={editOpen} onOpenChange={setEditOpen} />}
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف المنشور</AlertDialogTitle>
+            <AlertDialogDescription>هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">حذف</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
