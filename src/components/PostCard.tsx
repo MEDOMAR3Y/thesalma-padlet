@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Heart, MessageCircle, MoreVertical, Trash2, FileText, Send, X, User, Pencil, Copy, ExternalLink, Palette, ArrowUp, ArrowDown } from 'lucide-react';
+import { Heart, MessageCircle, MoreVertical, Trash2, FileText, Send, X, User, Pencil, Copy, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getVideoEmbed } from '@/lib/videoEmbed';
