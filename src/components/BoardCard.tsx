@@ -72,6 +72,7 @@ export default function BoardCard({ board }: { board: Board }) {
             backgroundColor: board.background_color,
             backgroundImage: board.background_image ? `url(${board.background_image})` : undefined,
           }}
+        >
           <div className="absolute inset-0 bg-black/10" />
           <div className="absolute bottom-2 right-3 flex items-center gap-1 bg-black/30 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
             <Icon className="h-3 w-3" />
