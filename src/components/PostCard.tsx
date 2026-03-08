@@ -97,7 +97,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, boardId }: PostCardProps) {
-  const { deletePost, updatePost } = usePosts(boardId);
+  const { deletePost } = usePosts(boardId);
   const { user } = useAuth();
   const isOwner = post.user_id === user?.id;
   const videoEmbed = post.link_url ? getVideoEmbed(post.link_url) : null;
@@ -128,14 +128,6 @@ export default function PostCard({ post, boardId }: PostCardProps) {
     }
   };
 
-  const handleChangeColor = async (newColor: string) => {
-    try {
-      await updatePost.mutateAsync({ id: post.id, color: newColor });
-      toast.success('تم تغيير اللون');
-    } catch { toast.error('حصل خطأ'); }
-  };
-
-  const POST_COLORS = ['#ffffff', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3', '#f3e8ff', '#fed7d7', '#e0e7ff'];
 
   return (
     <>
