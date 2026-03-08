@@ -1,0 +1,1 @@
+ALTER TABLE public.boards ALTER COLUMN visibility SET DEFAULT 'public';
