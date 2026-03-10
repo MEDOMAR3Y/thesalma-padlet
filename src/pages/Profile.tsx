@@ -143,7 +143,7 @@ export default function Profile() {
           <Link to="/"><img src={logo} alt="Logo" className="h-14 object-contain" /></Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <span className="hidden md:inline text-sm text-muted-foreground">{user?.email}</span>
+            
             <Button variant="ghost" size="icon" className="md:hidden" title="البروفايل">
               <UserCircle className="h-5 w-5" />
             </Button>
@@ -178,7 +178,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="font-semibold text-lg">{displayName || 'بدون اسم'}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  
                 </div>
               </div>
 
