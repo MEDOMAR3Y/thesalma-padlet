@@ -178,7 +178,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <p className="font-semibold text-lg">{displayName || 'بدون اسم'}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  
                 </div>
               </div>
 

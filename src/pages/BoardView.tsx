@@ -126,7 +126,7 @@ export default function BoardView() {
             <ThemeToggle />
             {user ? (
               <>
-                <span className="hidden md:inline text-sm text-muted-foreground">{user.email}</span>
+                
                 <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="md:hidden" title="البروفايل">
                   <UserCircle className="h-5 w-5" />
                 </Button>
