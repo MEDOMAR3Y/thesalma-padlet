@@ -53,7 +53,7 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
         file_url = null;
         file_name = null;
         // Determine new type based on remaining content
-        post_type = linkUrl.trim() ? 'link' : 'text';
+        post_type = linkUrl.trim() ? 'link' as const : 'text' as const;
       }
 
       await updatePost.mutateAsync({
