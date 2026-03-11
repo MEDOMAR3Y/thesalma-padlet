@@ -84,8 +84,15 @@ export default function Profile() {
 
     setLoading(true);
     try {
+      const finalDisplayName = displayName.trim() || username.trim() || null;
+      // Validate display name matches username (case-insensitive)
+      if (finalDisplayName && username && finalDisplayName.toLowerCase() !== username.toLowerCase()) {
+        toast.error('الاسم المعروض لازم يكون نفس اسم المستخدم (تغيير الأحرف الكبيرة/الصغيرة فقط)');
+        setLoading(false);
+        return;
+      }
       const profileData: any = {
-        display_name: displayName.trim() || null,
+        display_name: finalDisplayName,
         bio: bio.trim() || null,
         avatar_url: avatarUrl || null,
         username: username.trim() || null,
@@ -211,10 +218,6 @@ export default function Profile() {
 
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <Label>الاسم</Label>
-                  <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="اسمك" />
-                </div>
-                <div className="space-y-1">
                   <Label className="flex items-center gap-1.5">
                     <AtSign className="h-3.5 w-3.5" /> اسم المستخدم (Username)
                   </Label>
@@ -237,6 +240,24 @@ export default function Profile() {
                   {usernameStatus === 'taken' && <p className="text-xs text-destructive">اسم المستخدم محجوز</p>}
                   {usernameStatus === 'invalid' && <p className="text-xs text-amber-500">3-20 حرف (أحرف إنجليزية، أرقام، _ فقط)</p>}
                   {usernameStatus === 'available' && <p className="text-xs text-emerald-500">متاح ✓</p>}
+                </div>
+                <div className="space-y-1">
+                  <Label>الاسم المعروض (Display Name)</Label>
+                  <Input
+                    value={displayName}
+                    onChange={e => {
+                      const val = e.target.value;
+                      // Only allow capitalization changes of the username
+                      if (username && val.toLowerCase() === username.toLowerCase()) {
+                        setDisplayName(val);
+                      } else if (!val) {
+                        setDisplayName('');
+                      }
+                    }}
+                    placeholder={username || 'اسمك'}
+                    dir="ltr"
+                  />
+                  <p className="text-xs text-muted-foreground">يمكنك تغيير الأحرف الكبيرة والصغيرة فقط (مثال: {username ? `${username} → ${username.charAt(0).toUpperCase()}${username.slice(1)}` : 'ahmed → Ahmed'})</p>
                 </div>
                 <div className="space-y-1">
                   <Label>النبذة</Label>

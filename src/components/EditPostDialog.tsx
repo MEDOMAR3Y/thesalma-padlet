@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Image, FileUp, X, Trash2 } from 'lucide-react';
+import { Loader2, Image, FileUp, X, Trash2, Video } from 'lucide-react';
 import { Post, usePosts, uploadPostFile } from '@/hooks/usePosts';
 import { useAuth } from '@/hooks/useAuth';
+import { isVideoUrl } from '@/lib/videoEmbed';
 import { toast } from 'sonner';
 import RichTextEditor from '@/components/RichTextEditor';
 import ColorPicker from '@/components/ColorPicker';
@@ -22,6 +23,7 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
   const [linkUrl, setLinkUrl] = useState(post.link_url || '');
   const [color, setColor] = useState(post.color || '#ffffff');
   const [loading, setLoading] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(!!post.link_url);
   const { updatePost } = usePosts(boardId);
   const { user } = useAuth();
 
@@ -30,7 +32,7 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
   const [newFileType, setNewFileType] = useState<'image' | 'file' | null>(null);
   const [removeFile, setRemoveFile] = useState(false);
 
-  const currentFileUrl = removeFile ? null : (post.file_url);
+  const currentFileUrl = removeFile ? null : post.file_url;
   const hasFile = !!currentFileUrl || !!newFile;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +40,12 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
     setLoading(true);
     try {
       const textContent = content.replace(/<[^>]*>/g, '').trim();
-      
+
+      const trimmedLink = linkUrl.trim();
+      const normalizedLink = trimmedLink
+        ? (/^https?:\/\//i.test(trimmedLink) ? trimmedLink : `https://${trimmedLink}`)
+        : '';
+
       let file_url: string | null | undefined = undefined;
       let file_name: string | null | undefined = undefined;
       let post_type: Post['post_type'] | undefined = undefined;
@@ -52,15 +59,14 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
       } else if (removeFile) {
         file_url = null;
         file_name = null;
-        // Determine new type based on remaining content
-        post_type = linkUrl.trim() ? 'link' as const : 'text' as const;
+        post_type = normalizedLink ? 'link' as const : 'text' as const;
       }
 
       await updatePost.mutateAsync({
         id: post.id,
         content: textContent ? content : null,
         color,
-        link_url: linkUrl.trim() || null,
+        link_url: normalizedLink || null,
         ...(file_url !== undefined ? { file_url } : {}),
         ...(file_name !== undefined ? { file_name } : {}),
         ...(post_type !== undefined ? { post_type } : {}),
@@ -87,58 +93,10 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
             placeholder="محتوى المنشور..."
           />
 
-          {/* Link */}
-          <div className="space-y-1">
-            <Label className="text-sm">الرابط</Label>
-            <Input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..." dir="ltr" />
-          </div>
-
-          {/* Current file / image */}
-          {currentFileUrl && !newFile && (
-            <div className="space-y-1">
-              <Label className="text-sm">المرفق الحالي</Label>
-              <div className="relative rounded-lg border border-border overflow-hidden">
-                {post.post_type === 'image' ? (
-                  <img src={currentFileUrl} alt="" className="w-full max-h-32 object-cover" />
-                ) : (
-                  <div className="flex items-center gap-2 p-3 bg-muted/30">
-                    <FileUp className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm truncate">{post.file_name || 'ملف مرفق'}</span>
-                  </div>
-                )}
-                <Button type="button" variant="destructive" size="icon" className="absolute top-1 left-1 h-6 w-6"
-                  onClick={() => setRemoveFile(true)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* New file preview */}
-          {newFile && (
-            <div className="space-y-1">
-              <Label className="text-sm">المرفق الجديد</Label>
-              <div className="relative rounded-lg border border-border overflow-hidden">
-                {newFileType === 'image' ? (
-                  <img src={URL.createObjectURL(newFile)} alt="" className="w-full max-h-32 object-cover" />
-                ) : (
-                  <div className="flex items-center gap-2 p-3 bg-muted/30">
-                    <FileUp className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm truncate">{newFile.name}</span>
-                  </div>
-                )}
-                <Button type="button" variant="destructive" size="icon" className="absolute top-1 left-1 h-6 w-6"
-                  onClick={() => { setNewFile(null); setNewFileType(null); }}>
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Add/replace file buttons */}
-          {!newFile && (
+          {/* Attachments section - matching CreatePostDialog style */}
+          <div className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Label className="text-sm text-muted-foreground">{hasFile ? 'استبدال:' : 'إضافة مرفق:'}</Label>
+              <Label className="text-sm text-muted-foreground">{hasFile ? 'استبدال:' : 'أضف:'}</Label>
               <label className="cursor-pointer">
                 <Button type="button" variant="outline" size="sm" className="gap-1 h-8" asChild>
                   <span><Image className="h-3.5 w-3.5" /> صورة</span>
@@ -157,8 +115,54 @@ export default function EditPostDialog({ post, boardId, open, onOpenChange }: Ed
                   if (f) { setNewFile(f); setNewFileType('file'); setRemoveFile(false); }
                 }} />
               </label>
+              <Button type="button" variant="outline" size="sm" className="gap-1 h-8" onClick={() => setShowLinkInput(!showLinkInput)}>
+                <Video className="h-3.5 w-3.5" /> رابط / فيديو
+              </Button>
             </div>
-          )}
+
+            {/* Current file */}
+            {currentFileUrl && !newFile && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                {post.post_type === 'image' ? <Image className="h-4 w-4 text-primary" /> : <FileUp className="h-4 w-4 text-primary" />}
+                <span className="flex-1 truncate">{post.file_name || 'مرفق حالي'}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setRemoveFile(true)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {/* New file preview */}
+            {newFile && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                {newFileType === 'image' ? <Image className="h-4 w-4 text-primary" /> : <FileUp className="h-4 w-4 text-primary" />}
+                <span className="flex-1 truncate">{newFile.name}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setNewFile(null); setNewFileType(null); }}>
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+
+            {/* Link input */}
+            {showLinkInput && (
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="youtube.com/watch?v=... أو أي رابط"
+                  value={linkUrl}
+                  onChange={e => setLinkUrl(e.target.value)}
+                  dir="ltr"
+                  className="flex-1 h-9"
+                />
+                <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setShowLinkInput(false); setLinkUrl(''); }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {linkUrl && isVideoUrl(/^https?:\/\//i.test(linkUrl) ? linkUrl : `https://${linkUrl}`) && (
+              <p className="text-xs text-primary">✓ سيتم تضمين الفيديو تلقائياً</p>
+            )}
+          </div>
 
           <ColorPicker color={color} onChange={setColor} label="لون المنشور" />
 
