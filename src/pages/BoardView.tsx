@@ -189,7 +189,7 @@ export default function BoardView() {
           <div className={getLayoutClasses()}>
             <AnimatePresence>
               {posts.map(post => (
-                <div key={post.id} className={board.layout === 'wall' ? 'break-inside-avoid' : ''}>
+                <div key={post.id} className={board.layout === 'wall' || board.layout === 'grid' ? 'break-inside-avoid' : ''}>
                   <PostCard post={post} boardId={board.id} />
                 </div>
               ))}
