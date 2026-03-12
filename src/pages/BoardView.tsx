@@ -100,7 +100,7 @@ export default function BoardView() {
 
   const getLayoutClasses = () => {
     switch (board.layout) {
-      case 'grid': return 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4';
+      case 'grid': return 'columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4';
       case 'column': return 'flex flex-col max-w-xl mx-auto gap-4';
       case 'map': return 'grid grid-cols-2 lg:grid-cols-3 gap-6';
       case 'wall': default: return 'columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4';
