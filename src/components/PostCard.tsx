@@ -184,35 +184,35 @@ export default function PostCard({ post, boardId }: PostCardProps) {
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {/* Copy actions - available to everyone */}
+              <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                <DropdownMenuLabel className="text-xs text-muted-foreground">خيارات المنشور</DropdownMenuLabel>
+
                 {post.content && (
-                  <DropdownMenuItem onClick={handleCopyContent}>
-                    <Copy className="h-4 w-4 ml-2" /> نسخ المحتوى
+                  <DropdownMenuItem className="gap-2" onClick={handleCopyContent}>
+                    <Copy className="h-4 w-4" /> نسخ المحتوى
                   </DropdownMenuItem>
                 )}
                 {post.link_url && (
-                  <DropdownMenuItem onClick={handleCopyLink}>
-                    <ExternalLink className="h-4 w-4 ml-2" /> نسخ الرابط
+                  <DropdownMenuItem className="gap-2" onClick={handleCopyLink}>
+                    <ExternalLink className="h-4 w-4" /> نسخ الرابط
                   </DropdownMenuItem>
                 )}
                 {post.file_url && (
-                  <DropdownMenuItem onClick={() => window.open(post.file_url!, '_blank')}>
-                    <ExternalLink className="h-4 w-4 ml-2" /> فتح الملف
+                  <DropdownMenuItem className="gap-2" onClick={() => window.open(post.file_url!, '_blank')}>
+                    <ExternalLink className="h-4 w-4" /> فتح الملف
                   </DropdownMenuItem>
                 )}
 
-                {/* Owner actions */}
                 {isOwner && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                      <Pencil className="h-4 w-4 ml-2" /> تعديل المنشور
+                    <DropdownMenuItem className="gap-2" onClick={() => setEditOpen(true)}>
+                      <Pencil className="h-4 w-4" /> تعديل المنشور
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setDeleteConfirmOpen(true)} className="text-destructive focus:text-destructive">
-                      <Trash2 className="h-4 w-4 ml-2" /> حذف المنشور
+                    <DropdownMenuItem onClick={() => setDeleteConfirmOpen(true)} className="text-destructive focus:text-destructive gap-2">
+                      <Trash2 className="h-4 w-4" /> حذف المنشور
                     </DropdownMenuItem>
                   </>
                 )}
