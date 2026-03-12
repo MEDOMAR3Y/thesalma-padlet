@@ -157,7 +157,7 @@ export default function PostCard({ post, boardId }: PostCardProps) {
 
           {post.content && (
             <div
-              className="text-foreground text-sm mb-2 prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:pr-4 [&>ol]:list-decimal [&>ol]:pr-4"
+              className="text-foreground text-sm mb-2 prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:pr-4 [&>ol]:list-decimal [&>ol]:pr-4 break-words [overflow-wrap:anywhere]"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           )}
