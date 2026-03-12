@@ -36,12 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, username?: string) => {
+    const normalizedUsername = username?.trim().toLowerCase() || undefined;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { username, display_name: username },
+        data: { username: normalizedUsername, display_name: normalizedUsername },
       },
     });
     return { error };
