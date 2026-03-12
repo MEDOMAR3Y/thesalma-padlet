@@ -171,10 +171,25 @@ export function useLikes(postId: string) {
   return { likes: likesQuery.data ?? [], isLiked, count, toggleLike };
 }
 
+export const MAX_POST_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
+export function validatePostAttachment(file: File, fileType: 'image' | 'file') {
+  if (file.size > MAX_POST_FILE_SIZE_BYTES) {
+    return 'حجم المرفق أكبر من 25MB';
+  }
+
+  if (fileType === 'image' && !file.type.startsWith('image/')) {
+    return 'الملف المختار ليس صورة صالحة';
+  }
+
+  return null;
+}
+
 export async function uploadPostFile(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop();
-  const path = `${userId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('post-files').upload(path, file);
+  const ext = file.name.split('.').pop() || 'bin';
+  const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '_').slice(0, 32) || 'file';
+  const path = `${userId}/${Date.now()}-${baseName}.${ext}`;
+  const { error } = await supabase.storage.from('post-files').upload(path, file, { upsert: false });
   if (error) throw error;
   const { data } = supabase.storage.from('post-files').getPublicUrl(path);
   return data.publicUrl;
