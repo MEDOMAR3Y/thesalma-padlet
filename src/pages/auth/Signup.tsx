@@ -36,7 +36,8 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || usernameStatus !== 'available') {
+    const normalizedUsername = username.trim().toLowerCase();
+    if (!normalizedUsername || usernameStatus !== 'available') {
       toast.error('اختر اسم مستخدم صالح ومتاح');
       return;
     }
@@ -45,7 +46,7 @@ export default function Signup() {
       return;
     }
     setLoading(true);
-    const { error } = await signUp(email, password, username);
+    const { error } = await signUp(email, password, normalizedUsername);
     setLoading(false);
     if (error) {
       toast.error(error.message);
