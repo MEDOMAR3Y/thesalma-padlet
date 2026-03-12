@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Board } from '@/hooks/useBoards';
-import { Layout, Grid3X3, Columns3, Network, MoreVertical, Trash2, Archive, Settings, Copy, Globe, Lock, Eye, Pencil } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Layout, Grid3X3, Columns3, Network, MoreVertical, Trash2, Archive, Settings, Copy, Globe, Lock, Eye, RotateCcw } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useBoards } from '@/hooks/useBoards';
 import { toast } from 'sonner';
