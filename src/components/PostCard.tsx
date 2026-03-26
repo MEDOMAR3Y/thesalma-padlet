@@ -108,6 +108,20 @@ export default function PostCard({ post, boardId }: PostCardProps) {
     ? 'hsl(var(--card))'
     : (post.color || 'hsl(var(--card))');
 
+  // Determine text color based on background brightness
+  const getTextColorForBg = (hex: string | null | undefined): string | undefined => {
+    if (!hex || hex.startsWith('hsl') || hex.toLowerCase() === '#ffffff') return undefined;
+    const c = hex.replace('#', '');
+    if (c.length !== 6) return undefined;
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#1a1a1a' : '#f5f5f5';
+  };
+
+  const postTextColor = getTextColorForBg(post.color);
+
   const handleDelete = async () => {
     try {
       await deletePost.mutateAsync(post.id);
@@ -133,7 +147,7 @@ export default function PostCard({ post, boardId }: PostCardProps) {
     <>
       <motion.div layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
         className="rounded-xl border border-border shadow-sm overflow-hidden group"
-        style={{ backgroundColor: resolvedBackground }}
+        style={{ backgroundColor: resolvedBackground, color: postTextColor }}
       >
         {post.post_type === 'image' && post.file_url && (
           <img src={post.file_url} alt={post.content || ''} className="w-full max-h-64 object-cover" />
@@ -149,15 +163,15 @@ export default function PostCard({ post, boardId }: PostCardProps) {
                 <User className="h-3 w-3 text-primary" />
               )}
             </div>
-            <span className="text-xs font-medium text-muted-foreground">{post.profile?.display_name || 'مستخدم'}</span>
-            <span className="text-xs text-muted-foreground/60 mr-auto">
+            <span className="text-xs font-medium" style={{ color: postTextColor, opacity: 0.7 }}>{post.profile?.display_name || 'مستخدم'}</span>
+            <span className="text-xs mr-auto" style={{ color: postTextColor, opacity: 0.5 }}>
               {new Date(post.created_at).toLocaleDateString('ar-SA')}
             </span>
           </div>
 
           {post.content && (
             <div
-              className="text-foreground text-sm mb-2 prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:pr-4 [&>ol]:list-decimal [&>ol]:pr-4 break-words [overflow-wrap:anywhere]"
+              className="text-sm mb-2 prose prose-sm max-w-none [&>ul]:list-disc [&>ul]:pr-4 [&>ol]:list-decimal [&>ol]:pr-4 break-words [overflow-wrap:anywhere]"
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           )}
