@@ -58,7 +58,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'اك�
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none px-4 py-3 text-foreground',
+        class: 'prose prose-sm max-w-none focus:outline-none px-4 py-3 text-foreground break-words [overflow-wrap:anywhere] [word-break:break-word]',
         dir: 'rtl',
       },
     },
