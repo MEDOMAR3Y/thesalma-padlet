@@ -1,0 +1,1 @@
+ALTER TABLE public.boards ADD COLUMN wall_badge VARCHAR(1000) DEFAULT NULL;

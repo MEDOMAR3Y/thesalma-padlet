@@ -66,6 +66,7 @@ export type Database = {
           updated_at: string
           user_id: string
           visibility: string
+          wall_badge: string | null
         }
         Insert: {
           background_color?: string | null
@@ -80,6 +81,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           visibility?: string
+          wall_badge?: string | null
         }
         Update: {
           background_color?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visibility?: string
+          wall_badge?: string | null
         }
         Relationships: []
       }
