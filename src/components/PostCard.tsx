@@ -31,14 +31,29 @@ function PostLikes({ postId }: { postId: string }) {
   );
 }
 
+function formatTimeAgo(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'الآن';
+  if (diffMin < 60) return `منذ ${diffMin} د`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `منذ ${diffHr} س`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30) return `منذ ${diffDay} ي`;
+  return date.toLocaleDateString('ar-SA');
+}
+
 function PostComments({ postId }: { postId: string }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const { comments, addComment, deleteComment } = useComments(postId);
   const { user } = useAuth();
 
   const handleAdd = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || addComment.isPending) return;
     await addComment.mutateAsync(text.trim());
     setText('');
   };
@@ -46,33 +61,92 @@ function PostComments({ postId }: { postId: string }) {
   return (
     <div>
       <button onClick={() => setOpen(!open)} className="flex items-center gap-1 text-sm hover:text-primary transition-colors">
-        <MessageCircle className="h-4 w-4" />
+        <MessageCircle className={`h-4 w-4 ${open ? 'fill-primary/20 text-primary' : ''}`} />
         {comments.length > 0 && <span>{comments.length}</span>}
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-3 border-t border-border pt-3">
-            <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden mt-3 border-t border-border pt-3"
+          >
+            <div className="space-y-3 max-h-52 overflow-y-auto mb-3 scrollbar-thin">
+              {comments.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-2">لا توجد تعليقات بعد</p>
+              )}
               {comments.map(c => (
-                <div key={c.id} className="flex items-start gap-2 text-sm">
-                  <div className="flex-1">
-                    <span className="font-medium text-foreground">{c.profile?.display_name || 'مستخدم'}</span>
-                    <span className="text-muted-foreground mr-1">{c.content}</span>
+                <div key={c.id} className="flex items-start gap-2 group">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    {c.profile?.avatar_url ? (
+                      <img src={c.profile.avatar_url} className="w-6 h-6 rounded-full object-cover" alt="" />
+                    ) : (
+                      <User className="h-3 w-3 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-foreground">{c.profile?.display_name || 'مستخدم'}</span>
+                      <span className="text-[10px] text-muted-foreground">{formatTimeAgo(c.created_at)}</span>
+                    </div>
+                    <p className="text-sm text-foreground/80 mt-0.5 break-words [overflow-wrap:anywhere]">{c.content}</p>
                   </div>
                   {c.user_id === user?.id && (
-                    <button onClick={() => deleteComment.mutate(c.id)} className="text-muted-foreground hover:text-destructive">
-                      <X className="h-3 w-3" />
-                    </button>
+                    deleteConfirmId === c.id ? (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => { deleteComment.mutate(c.id); setDeleteConfirmId(null); }}
+                          className="text-[10px] text-destructive hover:underline"
+                        >
+                          حذف
+                        </button>
+                        <button onClick={() => setDeleteConfirmId(null)} className="text-[10px] text-muted-foreground hover:underline">
+                          إلغاء
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteConfirmId(c.id)}
+                        className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )
                   )}
                 </div>
               ))}
             </div>
-            <div className="flex gap-2">
-              <Input value={text} onChange={e => setText(e.target.value)} placeholder="أضف تعليق..." className="text-sm h-8" onKeyDown={e => e.key === 'Enter' && handleAdd()} />
-              <Button size="sm" variant="ghost" onClick={handleAdd} disabled={addComment.isPending} className="h-8 px-2">
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+            {user ? (
+              <div className="flex gap-2 items-center">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <User className="h-3 w-3 text-primary" />
+                </div>
+                <Input
+                  value={text}
+                  onChange={e => setText(e.target.value)}
+                  placeholder="اكتب تعليق..."
+                  className="text-sm h-8 flex-1"
+                  maxLength={500}
+                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleAdd()}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleAdd}
+                  disabled={addComment.isPending || !text.trim()}
+                  className="h-8 w-8 p-0 shrink-0"
+                >
+                  {addComment.isPending ? (
+                    <span className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">سجل دخول لإضافة تعليق</p>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
