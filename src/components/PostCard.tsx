@@ -260,15 +260,15 @@ export default function PostCard({ post, boardId }: PostCardProps) {
             </a>
           )}
 
-          <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/50 flex-nowrap">
-            <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-start justify-between gap-3 mt-3 pt-2 border-t border-border/50 flex-nowrap">
+            <div className="flex items-start gap-3 min-w-0">
               <PostLikes postId={post.id} />
               <PostComments postId={post.id} />
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
