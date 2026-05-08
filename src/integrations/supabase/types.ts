@@ -57,11 +57,13 @@ export type Database = {
           background_color: string | null
           background_image: string | null
           created_at: string
+          custom_link: string | null
           description: string | null
           folder: string | null
           id: string
           is_archived: boolean
           layout: string
+          slug: string | null
           title: string
           updated_at: string
           user_id: string
@@ -72,11 +74,13 @@ export type Database = {
           background_color?: string | null
           background_image?: string | null
           created_at?: string
+          custom_link?: string | null
           description?: string | null
           folder?: string | null
           id?: string
           is_archived?: boolean
           layout?: string
+          slug?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -87,11 +91,13 @@ export type Database = {
           background_color?: string | null
           background_image?: string | null
           created_at?: string
+          custom_link?: string | null
           description?: string | null
           folder?: string | null
           id?: string
           is_archived?: boolean
           layout?: string
+          slug?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -220,52 +226,64 @@ export type Database = {
       }
       posts: {
         Row: {
+          approved: boolean | null
           board_id: string
           color: string | null
           content: string | null
           created_at: string
           file_name: string | null
           file_url: string | null
+          guest_id: string | null
+          guest_name: string | null
           id: string
           link_url: string | null
           position_x: number | null
           position_y: number | null
           post_type: string
           sort_order: number | null
+          title: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          approved?: boolean | null
           board_id: string
           color?: string | null
           content?: string | null
           created_at?: string
           file_name?: string | null
           file_url?: string | null
+          guest_id?: string | null
+          guest_name?: string | null
           id?: string
           link_url?: string | null
           position_x?: number | null
           position_y?: number | null
           post_type?: string
           sort_order?: number | null
+          title?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          approved?: boolean | null
           board_id?: string
           color?: string | null
           content?: string | null
           created_at?: string
           file_name?: string | null
           file_url?: string | null
+          guest_id?: string | null
+          guest_name?: string | null
           id?: string
           link_url?: string | null
           position_x?: number | null
           position_y?: number | null
           post_type?: string
           sort_order?: number | null
+          title?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
